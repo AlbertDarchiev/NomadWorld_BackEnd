@@ -15,3 +15,4 @@ models.Base.metadata.create_all(bind=engine)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8080, reload=True)
+
