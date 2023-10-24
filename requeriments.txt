@@ -1,4 +1,0 @@
-jose
-uvicorn
-passlib
-sqlalchemy
