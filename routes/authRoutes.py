@@ -1,14 +1,16 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from pydantic import BaseModel
 from typing import List, Annotated
-from models import userModel as userM
-#import modelss
+from models import userModel as userM 
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
-import uvicorn
-from Security import hash
+from Security import hasher as hash
+from fastapi.responses import JSONResponse
 
 #userModel.Base.metadata.create_all(bind=engine)
+
+hasher = hash.Hasher()
+def_profile_img = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
 
 router = APIRouter()
 
@@ -33,26 +35,37 @@ def get_user(user_id: int, db: db_dependency):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
 @router.post("/register", response_model=UserBase)
 def create_user(user:UserBase,db:db_dependency):
-    db_user = userM.User(username=user.username,email=user.email,password=user.password,image=user.image)
+    if user.username == "":
+        raise HTTPException(status_code=400, detail="Username is empty")
+    uuuu = db.query(userM.User).filter(userM.User.username == user.username).first()
+    if uuuu:
+        raise HTTPException(status_code=404, detail="Username already exists")
+    if user.email == "":
+        raise HTTPException(status_code=400, detail="Email is empty")
+    if user.password == "":
+        raise HTTPException(status_code=400, detail="Password is empty")
+    hashed_password = hasher.get_password_hash(user.password)
+    db_user = userM.User(username=user.username,email=user.email,password=hashed_password,image=def_profile_img)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     db.close(db_user)
-    return db_user
+    return JSONResponse( status_code=201, content="User created successfully")
 
-@router.get("/login")
-def login(user:UserBase,db:db_dependency):
+
+@router.post("/login")
+def login(user:UserBase, db:db_dependency):
+    if user.username == "":
+        raise HTTPException(status_code=400, detail="Username is empty")
+    
     db_user = db.query(userM.User).filter(userM.User.username == user.username).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    if db_user.password != user.password:
-        raise HTTPException(status_code=404, detail="Incorrect password")
-    return db_user 
-
-@router.get("/register")
-def get_register_data(user:UserBase):
-    user_data = userM.User(username=user.username,email=user.email,password=user.password,)
-    encripted_data = hash.encript_data(user_data.password)
-    return encripted_data
+    
+    if not hasher.verify_password(user.password, db_user.password):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    
+    return JSONResponse(status_code=200, content="User logged successfully")

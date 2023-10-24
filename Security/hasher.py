@@ -1,11 +1,17 @@
-import bcrypt
+from passlib.context import CryptContext
 
-passwd = b'58a1b6f3d842f437c57e23a9cb2e1d8467a36b8ea91f18e46bcf240aa2e47a6a'
-salt = bcrypt.gensalt()
-hashed = bcrypt.hashpw(passwd, salt)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-#print(salt)
-#print(hashed)
+class Hasher():
+    @staticmethod
+    def verify_password(plain_password, hashed_password):
+        return pwd_context.verify(plain_password, hashed_password)
+
+    @staticmethod
+    def get_password_hash(password):
+        return pwd_context.hash(password)
+
+'''
 def encript_data(psw:str):
     salt1 = bcrypt.gensalt()
     return salt1
@@ -13,7 +19,7 @@ def encript_data(psw:str):
 
 
 
-'''
+
 CODIFICAR
 import bcrypt
 

@@ -15,6 +15,6 @@ Base = declarative_base()
 class UserBase(BaseModel):
     id: Optional[int] = None
     username: str
-    email: str
+    image: Optional[str] = None
     password: str
-    image: str
+    image: Optional[str] = None
