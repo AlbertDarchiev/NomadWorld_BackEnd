@@ -33,6 +33,8 @@ def get_user(user_id: int, db: db_dependency):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
+
 @app.post("/register", response_model=UserBase)
 def create_user(user:UserBase,db:db_dependency):
     db_user = models.User(username=user.username,email=user.email,password=user.password,image=user.image)
