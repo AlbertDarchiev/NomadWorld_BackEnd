@@ -8,7 +8,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     password = Column(String)
     image = Column(String)
-
+    
 class Location(Base):
     __tablename__ = "Location"
     id = Column(Integer, primary_key=True, index=True)
