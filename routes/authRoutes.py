@@ -52,7 +52,7 @@ def create_user(user:UserBase,db:db_dependency):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    db.close(db_user)
+    db.close()
     return JSONResponse( status_code=201, content="User created successfully")
 
 
