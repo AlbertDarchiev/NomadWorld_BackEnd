@@ -4,7 +4,7 @@ from typing import List, Annotated
 from models import userModel as userM 
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
-from Security import hasher as hash
+from security import hasher as hash
 from fastapi.responses import JSONResponse
 
 #userModel.Base.metadata.create_all(bind=engine)
@@ -40,8 +40,8 @@ def get_user(user_id: int, db: db_dependency):
 def create_user(user:UserBase,db:db_dependency):
     if user.username == "":
         raise HTTPException(status_code=400, detail="Username is empty")
-    uuuu = db.query(userM.User).filter(userM.User.username == user.username).first()
-    if uuuu:
+    db_username_exist = db.query(userM.User).filter(userM.User.username == user.username).first()
+    if db_username_exist:
         raise HTTPException(status_code=404, detail="Username already exists")
     if user.email == "":
         raise HTTPException(status_code=400, detail="Email is empty")
