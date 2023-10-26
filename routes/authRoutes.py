@@ -61,7 +61,7 @@ def login(user:UserBase, db:db_dependency):
     if user.username == "":
         raise HTTPException(status_code=400, detail="Username is empty")
     
-    db_user = db.query(userM.User).filter(userM.User.username == user.username).first()
+    db_user = db.query(userM.User).filter(userM.User.email == user.email).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     
