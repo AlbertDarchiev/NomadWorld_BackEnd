@@ -58,8 +58,8 @@ def create_user(user:UserBase,db:db_dependency):
 
 @router.post("/login")
 def login(user:UserBase, db:db_dependency):
-    if user.username == "":
-        raise HTTPException(status_code=400, detail="Username is empty")
+    if user.email == "":
+        raise HTTPException(status_code=400, detail="Email is empty")
     
     db_user = db.query(userM.User).filter(userM.User.email == user.email).first()
     if not db_user:
