@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from security import hasher as hash
 from fastapi.responses import JSONResponse
 
+from emailSender import sender as email
+
 #userModel.Base.metadata.create_all(bind=engine)
 
 hasher = hash.Hasher()
@@ -47,13 +49,24 @@ def create_user(user:UserBase,db:db_dependency):
         raise HTTPException(status_code=400, detail="Email is empty")
     if user.password == "":
         raise HTTPException(status_code=400, detail="Password is empty")
+    
+    if not email.ESender.check(user.email):
+        raise HTTPException(status_code=400, detail="Invalid email")
+    
     hashed_password = hasher.get_password_hash(user.password)
     db_user = userM.User(username=user.username,email=user.email,password=hashed_password,image=def_profile_img)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     db.close()
+
+    subject = '¡ Bienvenido a Nomad World !'
+    body = f"Usuario, {db_user.username} creado correctamente"
+    receiver = user.email
+    email.ESender.send_email(receiver, subject, body)
+
     return JSONResponse( status_code=201, content="User created successfully")
+
 
 
 @router.post("/login")
@@ -68,4 +81,6 @@ def login(user:UserBase, db:db_dependency):
     if not hasher.verify_password(user.password, db_user.password):
         raise HTTPException(status_code=401, detail="Incorrect password")
     
+
+
     return JSONResponse(status_code=200, content="User logged successfully")
