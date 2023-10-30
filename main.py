@@ -4,9 +4,11 @@ from typing import List, Annotated
 from models import userModel as userM
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
-from routes import authRoutes as auth_router
+from routes import authRoutes, mediaRoutes
 
 app = FastAPI()
-app.include_router(auth_router.router)
+app.include_router(authRoutes.router)
+app.include_router(mediaRoutes.router)
 
-userM.Base.metadata.create_all(bind=engine)
+
+#userM.Base.metadata.create_all(bind=engine)

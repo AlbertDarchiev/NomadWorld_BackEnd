@@ -19,3 +19,11 @@ class UserBase(BaseModel):
     email:str
     password: str
     image: Optional[str] = None
+
+class RouteBase(BaseModel):
+    id: Optional[int] = None
+    name: str
+    description: str
+    distance: str
+    duration: str
+    location_id: int
