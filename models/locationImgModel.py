@@ -1,6 +1,10 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Date
 from database import Base
+<<<<<<< HEAD
 from sqlalchemy.orm import relationship
+=======
+
+>>>>>>> 36050c65bf0dde376e65b48abb4b28fb099d16c2
 class LocationImage(Base):
     __tablename__ = "location_image"
 
