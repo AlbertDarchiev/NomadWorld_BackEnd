@@ -4,6 +4,7 @@ import models
 from typing import List, Annotated
 from sqlalchemy.orm import Session
 from models import routeModel as routeM
+
 from pydantic import BaseModel
 router = APIRouter()
 
@@ -68,3 +69,4 @@ def create_route_route(route: RouteBase, db: db_dependency):
     db.commit()
     db.refresh(db_route)
     return db_route
+

@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 URL_DATABASE = "postgresql://fl0user:bIqOB7Q5XrTi@ep-wild-snow-33454215.eu-central-1.aws.neon.fl0.io:5432/nomadworld?sslmode=require"
 #"postgresql://fl0user:Kj7obcqEh3LZ@ep-holy-breeze-83855958.eu-central-1.aws.neon.fl0.io:5432/database?sslmode=require"
@@ -19,6 +19,8 @@ class UserBase(BaseModel):
     email:str
     password: str
     image: Optional[str] = None
+    saved_routes: Optional[List[int]] = None
+    saved_locations: Optional[List[int]] = None
 
 class RouteBase(BaseModel):
     id: Optional[int] = None
@@ -27,3 +29,10 @@ class RouteBase(BaseModel):
     distance: str
     duration: str
     location_id: int
+
+class LocationBase(BaseModel):
+    id: Optional[int] = None
+    name: str
+    description: str
+    country_id: int
+    imageList: List[str]
