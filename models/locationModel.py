@@ -9,4 +9,4 @@ class Location(Base):
     description = Column(String)
     creation_date  = Column(DateTime(timezone=True))
     country_id = Column(Integer, ForeignKey("Country.id"))
-    imageList = Column(ARRAY(String))
+    image_id = Column(Integer, ForeignKey("Image.id"))

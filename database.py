@@ -34,5 +34,11 @@ class LocationBase(BaseModel):
     id: Optional[int] = None
     name: str
     description: str
+    creation_date: str
     country_id: int
-    imageList: List[str]
+    image_id: int
+
+class ImageBase(BaseModel):
+    id: Optional[int] = None
+    location_id: int
+    image_uri: List[str]
