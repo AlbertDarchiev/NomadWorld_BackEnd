@@ -54,7 +54,13 @@ def create_user(user:UserBase,db:db_dependency):
         raise HTTPException(status_code=400, detail="Invalid email")
     
     hashed_password = hasher.get_password_hash(user.password)
-    db_user = userM.Users(username="TESTTT",email=user.email,password=hashed_password,image=def_profile_img)
+    db_user = userM.Users(
+        username=user.username,
+        email=user.email,
+        password=hashed_password,
+        img=def_profile_img, 
+        saved_routes=[], 
+        saved_locations=[])
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

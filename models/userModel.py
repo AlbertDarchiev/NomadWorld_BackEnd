@@ -10,3 +10,4 @@ class Users(Base):
     img = Column(String)
     saved_routes = Column(ARRAY(Integer))
     saved_locations = Column(ARRAY(Integer))
+

@@ -18,9 +18,10 @@ class UserBase(BaseModel):
     username: Optional[str] = None
     email:str
     password: str
-    image: Optional[str] = None
+    img: Optional[str] = None
     saved_routes: Optional[List[int]] = None
     saved_locations: Optional[List[int]] = None
+
 
 class RouteBase(BaseModel):
     id: Optional[int] = None
