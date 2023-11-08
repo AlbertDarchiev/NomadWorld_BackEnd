@@ -4,7 +4,7 @@ from typing import List, Annotated
 from models import userModel as userM 
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
-from security import hasher as hash
+from Security import hasher as hash
 from fastapi.responses import JSONResponse
 
 from emailSender import sender as email
