@@ -61,7 +61,9 @@ def create_location_route(country_name:str, location: RouteBase, db: db_dependen
         description=location.description,
         creation_date=datetime.now(),
         country_id=country_id,
-        image_id=location.image_id
+        image_id=location.image_id,
+        latitude=location.latitude,
+        longitude=location.longitude
         )
     db.add(db_location)
     db.commit()

@@ -38,8 +38,8 @@ class LocationBase(BaseModel):
     creation_date: str
     country_id: int
     image_id: int
-    latitude: int
-    longitude: int
+    latitude: float
+    longitude: float
 
 class ImageBase(BaseModel):
     id: Optional[int] = None
