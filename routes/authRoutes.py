@@ -4,12 +4,12 @@ from typing import List, Annotated
 from models import userModel as userM 
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
-from Security import hasher as hash
+from security import hasher as hash
 from fastapi.responses import JSONResponse
 
 from emailSender import sender as email
 
-#userModel.Base.metadata.create_all(bind=engine)
+#userModel.Base.metadata.create_all(bind=engine)    
 
 hasher = hash.Hasher()
 def_profile_img = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
