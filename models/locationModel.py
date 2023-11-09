@@ -10,3 +10,5 @@ class Location(Base):
     creation_date  = Column(DateTime(timezone=True))
     country_id = Column(Integer, ForeignKey("Country.id"))
     image_id = Column(Integer, ForeignKey("Image.id"))
+    longitude = Column(Integer)
+    latitude = Column(Integer)
