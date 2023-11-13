@@ -22,7 +22,6 @@ class UserBase(BaseModel):
     saved_routes: Optional[List[int]] = None
     saved_locations: Optional[List[int]] = None
 
-
 class RouteBase(BaseModel):
     id: Optional[int] = None
     name: str
@@ -30,6 +29,7 @@ class RouteBase(BaseModel):
     distance: str
     duration: str
     location_id: int
+    country_id: int
 
 class LocationBase(BaseModel):
     id: Optional[int] = None

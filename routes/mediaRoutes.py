@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
-from database import SessionLocal, engine, UserBase, RouteBase
+from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase
 import models 
 from typing import List, Annotated
 from sqlalchemy.orm import Session
@@ -53,8 +53,8 @@ def get_location_route(db: db_dependency):
         raise HTTPException(status_code=404, detail="Location not found")
     return [location_info, images]
 
-@router.post("/create_location/{country_name}", response_model=RouteBase)
-def create_location_route(country_name:str, location: RouteBase, db: db_dependency):
+@router.post("/create_location/{country_name}", response_model=LocationBase)
+def create_location_route(country_name:str, location: LocationBase, db: db_dependency):
     country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
     db_location = locationModel.Location(
         name=location.name,
@@ -79,16 +79,18 @@ def get_country_route(db: db_dependency):
 
 
 @router.post("/create_route", response_model=RouteBase)
-def create_route_route(route: RouteBase, db: db_dependency):
+
+def create_route_route(country_name: int, route: RouteBase, db: db_dependency):
+    country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
     db_route = routeM.Route(
         name=route.name,
         description=route.description,
         distance=route.distance,
         duration=route.duration,
         location_id=route.location_id
+        
         )
     db.add(db_route)
     db.commit()
     db.refresh(db_route)
     return db_route
-
