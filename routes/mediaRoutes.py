@@ -86,6 +86,7 @@ def create_route_route(route: RouteBase, db: db_dependency):
         distance=route.distance,
         duration=route.duration,
         location_id=route.location_id
+        
         )
     db.add(db_route)
     db.commit()
