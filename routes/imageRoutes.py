@@ -39,16 +39,16 @@ print("Auth params-", auth_params)
 
 
 @router.post("/upload/image")
-async def upload_image(foldername: str, file: UploadFile = File(...)):
-    #image_url = 'https://a.cdn-hotels.com/gdcs/production81/d1983/1441d9b5-d0e6-4230-9923-646d58ba66d8.jpg'
-    
+# v la var "file" es lo que se envia desde el front (imagen)
+# v la var "foldername" es el nombre de la carpeta donde se va a guardar la imagen
+async def upload_image(foldername: str, file: UploadFile = File(...)):   
     content = await file.read()
-    image_base64 = base64.b64encode(content).decode("utf-8")
+    image_base64 = base64.b64encode(content).decode("utf-8") #codifica la imagen en base64(pasa la imagen a string)
 
-    upload_file = imagekit.upload(
-        file = image_base64,
-        file_name=str(datetime.now()),
-        options=UploadFileRequestOptions(
+    upload_file = imagekit.upload( 
+        file = image_base64, #se especifica el archivo a subir
+        file_name=str(datetime.now()), #se especifica el nombre del archivo
+        options=UploadFileRequestOptions( #se especifican las opciones de subida(con las que hay ahora tenemos suficiente)
             use_unique_file_name=False,
             folder=foldername
         )
