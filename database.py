@@ -33,13 +33,13 @@ class RouteBase(BaseModel):
 
 class LocationBase(BaseModel):
     id: Optional[int] = None
-    name: str
-    description: str
+    name: Optional[str] = None
+    description: Optional[str] = None
     creation_date: str
-    country_id: int
-    image_id: int
-    latitude: float
-    longitude: float
+    country_id: Optional[int] = None
+    image_id: Optional[int] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class ImageBase(BaseModel):
     id: Optional[int] = None
