@@ -57,31 +57,6 @@ def get_location_route(db: db_dependency):
         raise HTTPException(status_code=404, detail="Location not found")
     return [location_info, images]
 
-@router.post("/createimg", response_model=LocationBase)
-async def create_image( country_name: str,  db: db_dependency,location: LocationBase = Depends(),  image_files: List[UploadFile] = File(...)):
-    loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    
-    db_location = locationModel.Location(
-        name = location.name,
-        description = location.description,
-        creation_date=loc_date,
-        country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id,
-        longitude = location.longitude,
-        latitude = location.latitude
-    )
-
-    db.add(db_location)
-    db.commit()
-    db.refresh(db_location)
-
-    list_images_name = []
-    for i, image in enumerate(image_files):    
-        list_images_name.append(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        print(image.filename)
-
-
-    return JSONResponse( status_code=201, content="User created successfully")
-
 @router.post("/create_location", response_model=LocationBase)
 async def create_location_route( country_name: str, db: db_dependency, location: LocationBase = Depends(), image_files: List[UploadFile] = File(...)):
 
