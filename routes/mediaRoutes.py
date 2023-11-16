@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, UploadFile
+from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, Form, UploadFile
 from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase
 import models 
 from typing import List, Annotated
@@ -9,6 +9,7 @@ from datetime import datetime
 import base64
 from imagekitio import ImageKit
 from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
+from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel
 router = APIRouter()
@@ -57,23 +58,41 @@ def get_location_route(db: db_dependency):
     return [location_info, images]
 
 @router.post("/createimg", response_model=LocationBase)
-
-def create_image(location: LocationBase,  db: db_dependency, image_files: List[UploadFile] = File(...)):
-    loc_date = str(datetime.now())
+async def create_image( country_name: str,  db: db_dependency,location: LocationBase = Depends(),  image_files: List[UploadFile] = File(...)):
+    loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     
     db_location = locationModel.Location(
-        creation_date=loc_date
+        name = location.name,
+        description = location.description,
+        creation_date=loc_date,
+        country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id,
+        longitude = location.longitude,
+        latitude = location.latitude
     )
+
     db.add(db_location)
     db.commit()
     db.refresh(db_location)
-    return db_location
 
-@router.post("/create_location/{country_name}", response_model=LocationBase)
-def create_location_route(country_name: str, image: ImageBase, location: LocationBase,  db: db_dependency, image_files: List[UploadFile] = File(...)):
-    loc_date = str(datetime.now())
+    list_images_name = []
+    for i, image in enumerate(image_files):    
+        list_images_name.append(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        print(image.filename)
+
+
+    return JSONResponse( status_code=201, content="User created successfully")
+
+@router.post("/create_location", response_model=LocationBase)
+async def create_location_route( country_name: str, db: db_dependency, location: LocationBase = Depends(), image_files: List[UploadFile] = File(...)):
+
+    loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     db_location = locationModel.Location(
-        creation_date=loc_date
+        name = location.name,
+        description = location.description,
+        creation_date=loc_date,
+        country_id=db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id,
+        longitude = location.longitude,
+        latitude = location.latitude
     )
     db.add(db_location)
     db.commit()
@@ -81,35 +100,30 @@ def create_location_route(country_name: str, image: ImageBase, location: Locatio
     
     list_images_name = []
     # https://ik.imagekit.io/albertITB/locationImg/$[datetime.now()]
-    for i, image in enumerate(image_files):    
-        list_images_name.append(str(datetime.now()))
-        upload_file("locationImg",list_images_name[i] , image)
-
-    list_images_uri = []
-    for i in list_images_name:
-        img_ext = image_files[i].filename.split(".")[1]
-        list_images_uri.append(f"https://ik.imagekit.io/albertITB/locationImg/{i}.{img_ext}")
+    for i, image in enumerate(image_files):
+        date = str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S"))
+        img_ext = image.filename.split(".")[1]
+        list_images_name.append(f"https://ik.imagekit.io/albertITB/locationImg/{date}.{img_ext}")
+        image_name = f"{date}.{img_ext}"
+        upload_file("locationImg",image_name , image)
 
     loc_id = db.query(locationModel.Location).filter(locationModel.Location.creation_date == loc_date).first().id
     db_image = imageModel.Image(
         location_id=loc_id,
-        image_uri=list_images_uri
+        image_uri=list_images_name
     )
     db.add(db_image)
     db.commit()
     db.refresh(db_image)
 
     db.query(locationModel.Location).filter_by(creation_date=loc_date).update(
-        {locationModel.Location.name: location.name,
-        locationModel.Location.description: location.description,
-        locationModel.Location.country_id: db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id,
+        {
         locationModel.Location.image_id: db_image.id,
-        locationModel.Location.longitude: location.longitude,
-        locationModel.Location.latitude: location.latitude})
+        })
     
     db.commit()
     db.refresh(db_location)
-    return db_location
+    return JSONResponse( status_code=201, content="User created successfully")
 
 @router.get("/country/")
 def get_country_route(db: db_dependency):
@@ -117,7 +131,6 @@ def get_country_route(db: db_dependency):
     if not country_info:
         raise HTTPException(status_code=404, detail="Country not found")
     return country_info
-
 
 @router.post("/create_route", response_model=RouteBase)
 

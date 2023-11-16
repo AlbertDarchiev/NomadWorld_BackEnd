@@ -35,7 +35,7 @@ class LocationBase(BaseModel):
     id: Optional[int] = None
     name: Optional[str] = None
     description: Optional[str] = None
-    creation_date: str
+    creation_date: Optional[str] = None
     country_id: Optional[int] = None
     image_id: Optional[int] = None
     latitude: Optional[float] = None
@@ -43,5 +43,5 @@ class LocationBase(BaseModel):
 
 class ImageBase(BaseModel):
     id: Optional[int] = None
-    location_id: int
+    location_id: Optional[int] = None
     image_uri: List[str]
