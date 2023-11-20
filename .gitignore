@@ -4,3 +4,4 @@ env
 __pycache__/
 models/__pycache__/
 routes/__pycache__/
+routes/imageRoutes.py

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, Form, UploadFile
 from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase
 import models 
-from typing import List, Annotated
+from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
 from models import routeModel as routeM
 from models import locationModel, imageModel, coutryModel
@@ -47,15 +47,18 @@ def get_route_by_country_route(country_id: int, db: db_dependency):
     # Retornar todas las rutas ordenadas por likes en orden descendente
     return route_info
 
+
 @router.get("/location/")
-def get_location_route(db: db_dependency): 
+def get_location_route(db: db_dependency, response_model=List[Union[LocationBase, ImageBase]]): 
     location_info = db.query(locationModel.Location).all()
     images = db.query(imageModel.Image).filter(imageModel.Image.id == locationModel.Location.image_id).all()
     
-
+    responses = []
     if not location_info:
         raise HTTPException(status_code=404, detail="Location not found")
-    return [location_info, images]
+    for i, response in enumerate(location_info):
+        responses.append([response, images[i]])
+    return responses
 
 @router.post("/create_location", response_model=LocationBase)
 async def create_location_route( country_name: str, db: db_dependency, location: LocationBase = Depends(), image_files: List[UploadFile] = File(...)):
@@ -98,7 +101,7 @@ async def create_location_route( country_name: str, db: db_dependency, location:
     
     db.commit()
     db.refresh(db_location)
-    return JSONResponse( status_code=201, content="User created successfully")
+    return JSONResponse( status_code=201, content="Location created successfully")
 
 @router.get("/country/")
 def get_country_route(db: db_dependency):
