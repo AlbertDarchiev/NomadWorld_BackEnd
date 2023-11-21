@@ -49,7 +49,7 @@ def get_route_by_country_route(country_id: int, db: db_dependency):
 
 
 @router.get("/location/")
-def get_location_route(db: db_dependency, response_model=List[Union[LocationBase, ImageBase]]): 
+def get_location_route(db: db_dependency): 
     location_info = db.query(locationModel.Location).all()
     images = db.query(imageModel.Image).filter(imageModel.Image.id == locationModel.Location.image_id).all()
     
@@ -59,6 +59,19 @@ def get_location_route(db: db_dependency, response_model=List[Union[LocationBase
     for i, response in enumerate(location_info):
         responses.append([response, images[i]])
     return responses
+
+@router.get("/location/{country_name}")
+def get_location_route(country_name:str, db: db_dependency):
+    location_info = db.query(locationModel.Location).filter(locationModel.Location.country_id == db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id).all()
+    images = db.query(imageModel.Image).filter(imageModel.Image.id == locationModel.Location.image_id).all()
+    
+    responses = []
+    if not location_info:
+        raise HTTPException(status_code=404, detail="Location not found")
+    for i, response in enumerate(location_info):
+        responses.append([response, images[i]])
+    return responses
+
 
 @router.post("/create_location", response_model=LocationBase)
 async def create_location_route( country_name: str, db: db_dependency, location: LocationBase = Depends(), image_files: List[UploadFile] = File(...)):
@@ -111,7 +124,6 @@ def get_country_route(db: db_dependency):
     return country_info
 
 @router.post("/create_route", response_model=RouteBase)
-
 def create_route_route(country_name: int, route: RouteBase, db: db_dependency):
     country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
     db_route = routeM.Route(
@@ -120,7 +132,6 @@ def create_route_route(country_name: int, route: RouteBase, db: db_dependency):
         distance=route.distance,
         duration=route.duration,
         location_id=route.location_id
-        
         )
     db.add(db_route)
     db.commit()
