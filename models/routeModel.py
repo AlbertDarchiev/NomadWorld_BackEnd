@@ -8,4 +8,6 @@ class Route(Base):
     description = Column(String)
     distance = Column(String)
     duration = Column(Interval)
-    location_id = Column(Integer, ForeignKey("Location.id"))
+    country_id = Column(Integer, ForeignKey("country.id"))
+    location_id = Column(Integer, ForeignKey("location.id"))
+

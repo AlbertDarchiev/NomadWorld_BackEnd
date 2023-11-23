@@ -28,8 +28,9 @@ class RouteBase(BaseModel):
     description: str
     distance: str
     duration: str
-    location_id: int
     country_id: int
+    location_id: int
+    
 
 class LocationBase(BaseModel):
     id: Optional[int] = None
@@ -45,3 +46,27 @@ class ImageBase(BaseModel):
     id: Optional[int] = None
     location_id: Optional[int] = None
     image_uri: List[str]
+
+class RouteLikes(BaseModel):
+    like_id: Optional[int] = None
+    user_id: Optional[int] = None
+    route_id: Optional[int] = None
+
+class RouteComment(BaseModel):
+    comment_id: Optional[int] = None
+    user_id: Optional[int] = None
+    route_id: Optional[int] = None
+    comment: str
+    date: str
+
+class LocationLike(BaseModel):
+    like_id: Optional[int] = None
+    user_id: Optional[int] = None
+    route_id: Optional[int] = None
+
+class LocationComment(BaseModel):
+    comment_id: Optional[int] = None
+    user_id: Optional[int] = None
+    route_id: Optional[int] = None
+    comment: str
+    date: str

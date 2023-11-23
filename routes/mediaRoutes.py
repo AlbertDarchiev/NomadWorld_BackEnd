@@ -4,7 +4,7 @@ import models
 from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
 from models import routeModel as routeM
-from models import locationModel, imageModel, coutryModel
+from models import locationModel, imageModel, coutryModel, routeLikesModel, routeModel
 from datetime import datetime
 import base64
 from imagekitio import ImageKit
@@ -22,10 +22,18 @@ def get_db():
         db.close() 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+@router.get("/country/")
+def get_country_route(db: db_dependency):
+    country_info = db.query(coutryModel.Country).all()
+    if not country_info:
+        raise HTTPException(status_code=404, detail="Country not found")
+    return country_info
+
 @router.get("/route/more_likes/")
 def get_media_more_likes_route(db: db_dependency):
-    route_info = db.query(routeM.Route).order_by(models.Route.like.desc()).all()
-
+    route_info = db.query(routeModel.Route.id).all()
+    rout_like = db.query(routeLikesModel.RouteLikes).all()
+    
     if not route_info:
         raise HTTPException(status_code=404, detail="Route not found")
     # Retornar todas las rutas ordenadas por likes en orden descendente
@@ -33,18 +41,17 @@ def get_media_more_likes_route(db: db_dependency):
     
 @router.get("/route/")    
 def get_media_route(db: db_dependency):
-    route_info = db.query(routeM.Route).all()
+    route_info = db.query(routeModel.Route).all()
 
     if not route_info:
         raise HTTPException(status_code=404, detail="Route not found")
     return route_info
 
-@router.get("/route/{country_id}")
-def get_route_by_country_route(country_id: int, db: db_dependency):
-    route_info = db.query(routeM.Route).filter(models.Route.country_id == country_id).all()
+@router.get("/route/{country_name}")
+def get_route_by_country_route(country_name: str, db: db_dependency):
+    route_info = db.query(routeM.Route).filter(models.Route.country_name == country_name).all()
     if not route_info:
         raise HTTPException(status_code=404, detail="Route not found")
-    # Retornar todas las rutas ordenadas por likes en orden descendente
     return route_info
 
 
@@ -74,7 +81,7 @@ def get_location_route(country_name:str, db: db_dependency):
 
 
 @router.post("/create_location", response_model=LocationBase)
-async def create_location_route( country_name: str, db: db_dependency, location: LocationBase = Depends(), image_files: List[UploadFile] = File(...)):
+async def create_location_route( country_name: str, db: db_dependency, image_files: List[str], location: LocationBase = Depends()):
 
     loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     db_location = locationModel.Location(
@@ -116,12 +123,7 @@ async def create_location_route( country_name: str, db: db_dependency, location:
     db.refresh(db_location)
     return JSONResponse( status_code=201, content="Location created successfully")
 
-@router.get("/country/")
-def get_country_route(db: db_dependency):
-    country_info = db.query(coutryModel.Country).all()
-    if not country_info:
-        raise HTTPException(status_code=404, detail="Country not found")
-    return country_info
+
 
 @router.post("/create_route", response_model=RouteBase)
 def create_route_route(country_name: int, route: RouteBase, db: db_dependency):
