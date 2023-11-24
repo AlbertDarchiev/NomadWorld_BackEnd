@@ -72,8 +72,17 @@ def get_media_route(db: db_dependency):
 @router.get("/route/{country_name}")
 def get_route_by_country_route(country_name: str, db: db_dependency):
     route_info = db.query(routeM.Route).filter(models.Route.country_name == country_name).all()
-    if not route_info:
-        raise HTTPException(status_code=404, detail="Route not found")
+    responses = []
+    for route in route_info:
+        locations = []
+        for i, loc in enumerate(route.location_id):
+            locAndImage = []
+            location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
+            image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
+            locAndImage.append(location)
+            locAndImage.append(image)
+            locations.append(locAndImage)
+        responses.append([route, locations])
     return route_info
 
 
