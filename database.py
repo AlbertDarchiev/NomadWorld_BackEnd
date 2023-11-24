@@ -29,8 +29,7 @@ class RouteBase(BaseModel):
     distance: str
     duration: str
     country_id: int
-    location_id: int
-    
+    location_id: int    
 
 class LocationBase(BaseModel):
     id: Optional[int] = None

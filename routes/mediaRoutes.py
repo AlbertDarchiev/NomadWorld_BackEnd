@@ -3,6 +3,7 @@ from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, Im
 import models 
 from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
+from sqlalchemy import desc, func, select
 from models import routeModel as routeM
 from models import locationModel, imageModel, coutryModel, routeLikesModel, routeModel
 from datetime import datetime
@@ -31,21 +32,42 @@ def get_country_route(db: db_dependency):
 
 @router.get("/route/more_likes/")
 def get_media_more_likes_route(db: db_dependency):
-    route_info = db.query(routeModel.Route.id).all()
-    rout_like = db.query(routeLikesModel.RouteLikes).all()
-    
+    route_info = db.query(routeModel.Route).join(routeLikesModel.RouteLikes).group_by(routeModel.Route.id).order_by(func.count(routeLikesModel.RouteLikes.route_id).desc()).all()
+    responses = []
     if not route_info:
         raise HTTPException(status_code=404, detail="Route not found")
-    # Retornar todas las rutas ordenadas por likes en orden descendente
-    return route_info
-    
-@router.get("/route/")    
+    for route in route_info:
+        print(route.location_id)
+        locations = []
+        for i, loc in enumerate(route.location_id):
+            locAndImage = []
+            location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
+            image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
+            print(location.id)
+            locAndImage.append(location)
+            locAndImage.append(image)
+            locations.append(locAndImage)
+        responses.append([route, locations])
+    return responses
+
+
+@router.get("/route")    
 def get_media_route(db: db_dependency):
     route_info = db.query(routeModel.Route).all()
-
+    responses = []
     if not route_info:
         raise HTTPException(status_code=404, detail="Route not found")
-    return route_info
+    for route in route_info:
+        locations = []
+        for i, loc in enumerate(route.location_id):
+            locAndImage = []
+            location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
+            image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
+            locAndImage.append(location)
+            locAndImage.append(image)
+            locations.append(locAndImage)
+        responses.append([route, locations])
+    return responses
 
 @router.get("/route/{country_name}")
 def get_route_by_country_route(country_name: str, db: db_dependency):
@@ -55,7 +77,7 @@ def get_route_by_country_route(country_name: str, db: db_dependency):
     return route_info
 
 
-@router.get("/location/")
+@router.get("/location")
 def get_location_route(db: db_dependency): 
     location_info = db.query(locationModel.Location).all()
     images = db.query(imageModel.Image).filter(imageModel.Image.id == locationModel.Location.image_id).all()
@@ -125,9 +147,9 @@ async def create_location_route( country_name: str, db: db_dependency, image_fil
 
 
 
-@router.post("/create_route", response_model=RouteBase)
+@router.post("/create_route/{country_name}", response_model=RouteBase)
 def create_route_route(country_name: int, route: RouteBase, db: db_dependency):
-    country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
+    country_name = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
     db_route = routeM.Route(
         name=route.name,
         description=route.description,

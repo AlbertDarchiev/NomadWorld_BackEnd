@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Date, Interval
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Date, Interval, ARRAY
 from database import Base
 
 class Route(Base):
@@ -9,5 +9,6 @@ class Route(Base):
     distance = Column(String)
     duration = Column(Interval)
     country_id = Column(Integer, ForeignKey("country.id"))
-    location_id = Column(Integer, ForeignKey("location.id"))
+    location_id = Column(ARRAY(Integer))
+    #location_id = Column(Integer, ForeignKey("location.id"))
 
