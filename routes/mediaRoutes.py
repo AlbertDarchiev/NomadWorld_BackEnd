@@ -40,14 +40,12 @@ def get_media_more_likes_route(db: db_dependency):
         print(route.location_id)
         locations = []
         for i, loc in enumerate(route.location_id):
-            locAndImage = []
             location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
             image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
-            print(location.id)
-            locAndImage.append(location)
-            locAndImage.append(image)
-            locations.append(locAndImage)
-        responses.append([route, locations])
+            location.image = image.image_uri
+            locations.append(location)
+        route.location_id = locations
+        responses.append([route])
     return responses
 
 
@@ -60,13 +58,12 @@ def get_media_route(db: db_dependency):
     for route in route_info:
         locations = []
         for i, loc in enumerate(route.location_id):
-            locAndImage = []
             location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
             image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
-            locAndImage.append(location)
-            locAndImage.append(image)
-            locations.append(locAndImage)
-        responses.append([route, locations])
+            location.image = image.image_uri
+            locations.append(location)
+        route.location_id = locations
+        responses.append([route])
     return responses
 
 @router.get("/route/{country_name}")
@@ -76,14 +73,14 @@ def get_route_by_country_route(country_name: str, db: db_dependency):
     for route in route_info:
         locations = []
         for i, loc in enumerate(route.location_id):
-            locAndImage = []
             location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
             image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
-            locAndImage.append(location)
-            locAndImage.append(image)
-            locations.append(locAndImage)
-        responses.append([route, locations])
+            location.image = image.image_uri
+            locations.append(location)
+        route.location_id = locations
+        responses.append([route])
     return route_info
+
 
 
 @router.get("/location")
@@ -112,8 +109,8 @@ def get_location_route(country_name:str, db: db_dependency):
 
 
 @router.post("/create_location", response_model=LocationBase)
-async def create_location_route( country_name: str, db: db_dependency, image_files: List[str], location: LocationBase = Depends()):
-
+async def create_location_location( country_name: str, db: db_dependency, image_files: List[str], location: LocationBase = Depends()):
+    
     loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     db_location = locationModel.Location(
         name = location.name,
@@ -131,10 +128,10 @@ async def create_location_route( country_name: str, db: db_dependency, image_fil
     # https://ik.imagekit.io/albertITB/locationImg/$[datetime.now()]
     for i, image in enumerate(image_files):
         date = str(datetime.now().strftime("%Y-%m-%d_%H_%M_%S"))
-        img_ext = image.filename.split(".")[1]
-        list_images_name.append(f"https://ik.imagekit.io/albertITB/locationImg/{date}.{img_ext}")
-        image_name = f"{date}.{img_ext}"
-        upload_file("locationImg",image_name , image)
+        #img_ext = image.filename.split(".")[1]
+        list_images_name.append(f"https://ik.imagekit.io/albertITB/locationImg/{date}.png")
+        image_name = f"{date}.png"
+        await upload_file("locationImg" ,image_name , image)
 
     loc_id = db.query(locationModel.Location).filter(locationModel.Location.creation_date == loc_date).first().id
     db_image = imageModel.Image(
@@ -171,17 +168,17 @@ def create_route_route(country_name: int, route: RouteBase, db: db_dependency):
     db.refresh(db_route)
     return db_route
 
-async def upload_file(foldername: str, image_name:str, file: UploadFile = File(...)):
+async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
         private_key='private_iDHFe+AfM2FSVeBe1o11jqllHB4=',
         public_key='public_SWebOtYLMFIFinKilKGXkwGFAoM=',
         url_endpoint='https://ik.imagekit.io/albertITB'
     )
-    content = await file.read()
-    image_base64 = base64.b64encode(content).decode("utf-8")
+    #content = await file
+    #image_base64 = base64.b64encode(content).decode("utf-8")
 
-    upload_file = imagekit.upload(
-        file = image_base64, #se especifica el archivo a subir
+    imagekit.upload(
+        file, #se especifica el archivo a subir
         file_name=image_name, #se especifica el nombre del archivo
         options=UploadFileRequestOptions( #se especifican las opciones de subida(con las que hay ahora tenemos suficiente)
             use_unique_file_name=False,
