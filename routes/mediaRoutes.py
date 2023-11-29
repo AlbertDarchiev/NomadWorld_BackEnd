@@ -11,8 +11,8 @@ import base64
 from imagekitio import ImageKit
 from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
 from fastapi.responses import JSONResponse
-
 from pydantic import BaseModel
+
 router = APIRouter()
 
 def get_db():
@@ -45,7 +45,7 @@ def get_media_more_likes_route(db: db_dependency):
             location.image = image.image_uri
             locations.append(location)
         route.location_id = locations
-        responses.append([route])
+        responses.append(route)
     return responses
 
 
@@ -63,7 +63,7 @@ def get_media_route(db: db_dependency):
             location.image = image.image_uri
             locations.append(location)
         route.location_id = locations
-        responses.append([route])
+        responses.append(route)
     return responses
 
 @router.get("/route/{country_name}")
@@ -78,37 +78,63 @@ def get_route_by_country_route(country_name: str, db: db_dependency):
             location.image = image.image_uri
             locations.append(location)
         route.location_id = locations
-        responses.append([route])
+        responses.append(route)
     return route_info
 
 
+@router.post("/save_route", response_model=RouteBase)
+def save_route(db:db_dependency, country_name:str, route: RouteBase = Depends()):
+    db_route = routeModel.Route(
+        name = route.name,
+        descirption = route.description,
+        distance = route.distance,
+        duration = route.duration,
+        country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id,
+        location_id = route.location_id
+    )
+    db.add(db_route)
+    db.commit()
+    db.refresh(db_route)
+    return db_route
 
 @router.get("/location")
 def get_location_route(db: db_dependency): 
     location_info = db.query(locationModel.Location).all()
-    images = db.query(imageModel.Image).filter(imageModel.Image.id == locationModel.Location.image_id).all()
-    
     responses = []
     if not location_info:
         raise HTTPException(status_code=404, detail="Location not found")
-    for i, response in enumerate(location_info):
-        responses.append([response, images[i]])
+    
+    for loc in location_info:
+        loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
+        responses.append(loc)
     return responses
 
 @router.get("/location/{country_name}")
 def get_location_route(country_name:str, db: db_dependency):
     location_info = db.query(locationModel.Location).filter(locationModel.Location.country_id == db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id).all()
-    images = db.query(imageModel.Image).filter(imageModel.Image.id == locationModel.Location.image_id).all()
     
     responses = []
     if not location_info:
         raise HTTPException(status_code=404, detail="Location not found")
-    for i, response in enumerate(location_info):
-        responses.append([response, images[i]])
+    for loc in location_info:
+        loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
+        responses.append(loc)
+    return responses
+
+@router.get("/location/{loc_id}")
+def get_location_route(loc_id:int, db: db_dependency):
+    location_info = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+    
+    responses = []
+    if not location_info:
+        raise HTTPException(status_code=404, detail="Location not found")
+    for loc in location_info:
+        loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
+        responses.append(loc)
     return responses
 
 
-@router.post("/create_location", response_model=LocationBase)
+@router.post("/create_location/{country_name}", response_model=LocationBase)
 async def create_location_location( country_name: str, db: db_dependency, image_files: List[str], location: LocationBase = Depends()):
     
     loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
