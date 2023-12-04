@@ -1,12 +1,10 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
-import httpx
 from typing import List, Annotated, Optional
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, UserBase, RouteBase
 from base64 import b64encode
 from datetime import datetime
-import aiohttp
 import base64
 import hmac
 import hashlib

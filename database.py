@@ -26,10 +26,10 @@ class RouteBase(BaseModel):
     id: Optional[int] = None
     name: str
     description: str
-    distance: str
-    duration: str
-    country_id: int
-    location_id: int    
+    distance: int
+    duration: int
+    country_id: Optional[int] = None
+    location_id: List[int]
 
 class LocationBase(BaseModel):
     id: Optional[int] = None

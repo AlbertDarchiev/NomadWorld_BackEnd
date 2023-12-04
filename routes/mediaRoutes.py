@@ -180,13 +180,14 @@ async def create_location_location( country_name: str, db: db_dependency, image_
 
 
 @router.post("/create_route/{country_name}", response_model=RouteBase)
-def create_route_route(country_name: int, route: RouteBase, db: db_dependency):
+def create_route_route(country_name: str, route: RouteBase, db: db_dependency):
     country_name = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
     db_route = routeM.Route(
         name=route.name,
         description=route.description,
         distance=route.distance,
         duration=route.duration,
+        country_id=country_name,
         location_id=route.location_id
         )
     db.add(db_route)
