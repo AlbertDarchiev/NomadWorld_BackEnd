@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, Form, UploadFile
-from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase
+from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase, LocationCommentBase
 import models 
 from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, select
 from models import routeModel as routeM
-from models import locationModel, imageModel, coutryModel, routeLikesModel, routeModel
+from models import locationModel, imageModel, coutryModel, routeLikesModel, routeModel, locationCommnetModel
 from datetime import datetime
 import base64
 from imagekitio import ImageKit
@@ -30,6 +30,7 @@ def get_country_route(db: db_dependency):
         raise HTTPException(status_code=404, detail="Country not found")
     return country_info
 
+# ROUTE ROUTES ---------------------------------------------------------------------
 @router.get("/route/more_likes/")
 def get_media_more_likes_route(db: db_dependency):
     route_info = db.query(routeModel.Route).join(routeLikesModel.RouteLikes).group_by(routeModel.Route.id).order_by(func.count(routeLikesModel.RouteLikes.route_id).desc()).all()
@@ -47,7 +48,6 @@ def get_media_more_likes_route(db: db_dependency):
         route.location_id = locations
         responses.append(route)
     return responses
-
 
 @router.get("/route")    
 def get_media_route(db: db_dependency):
@@ -81,6 +81,21 @@ def get_route_by_country_route(country_name: str, db: db_dependency):
         responses.append(route)
     return route_info
 
+@router.post("/create_route/{country_name}", response_model=RouteBase)
+def create_route_route(country_name: str, route: RouteBase, db: db_dependency):
+    country_name = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
+    db_route = routeM.Route(
+        name=route.name,
+        description=route.description,
+        distance=route.distance,
+        duration=route.duration,
+        country_id=country_name,
+        location_id=route.location_id
+        )
+    db.add(db_route)
+    db.commit()
+    db.refresh(db_route)
+    return db_route
 
 @router.post("/save_route", response_model=RouteBase)
 def save_route(db:db_dependency, country_name:str, route: RouteBase = Depends()):
@@ -96,6 +111,10 @@ def save_route(db:db_dependency, country_name:str, route: RouteBase = Depends())
     db.commit()
     db.refresh(db_route)
     return db_route
+
+
+# LOCATION ROUTES ---------------------------------------------------------------------
+
 
 @router.get("/location")
 def get_location_route(db: db_dependency): 
@@ -177,23 +196,20 @@ async def create_location_location( country_name: str, db: db_dependency, image_
     db.refresh(db_location)
     return JSONResponse( status_code=201, content="Location created successfully")
 
-
-
-@router.post("/create_route/{country_name}", response_model=RouteBase)
-def create_route_route(country_name: str, route: RouteBase, db: db_dependency):
-    country_name = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
-    db_route = routeM.Route(
-        name=route.name,
-        description=route.description,
-        distance=route.distance,
-        duration=route.duration,
-        country_id=country_name,
-        location_id=route.location_id
-        )
-    db.add(db_route)
+@router.post("/add_comment", response_model=LocationCommentBase)
+async def create_location_location( db: db_dependency, comment: LocationCommentBase):
+    date_now = datetime.now().date()
+    db_comment = locationCommnetModel.Location_comment(
+        user_id = comment.user_id,
+        location_id = comment.location_id,
+        comment = comment.comment,
+        date = datetime.now().date()
+    )
+    print(datetime.now().date())
+    db.add(db_comment)
     db.commit()
-    db.refresh(db_route)
-    return db_route
+    db.refresh(db_comment)
+    return db_comment
 
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(

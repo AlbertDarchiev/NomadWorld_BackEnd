@@ -1,3 +1,4 @@
+import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -46,26 +47,26 @@ class ImageBase(BaseModel):
     location_id: Optional[int] = None
     image_uri: List[str]
 
-class RouteLikes(BaseModel):
+class RouteLikesBase(BaseModel):
     like_id: Optional[int] = None
     user_id: Optional[int] = None
     route_id: Optional[int] = None
 
-class RouteComment(BaseModel):
+class RouteCommentBase(BaseModel):
     comment_id: Optional[int] = None
-    user_id: Optional[int] = None
-    route_id: Optional[int] = None
+    user_id: int
+    route_id: int
     comment: str
     date: str
 
-class LocationLike(BaseModel):
+class LocationLikeBase(BaseModel):
     like_id: Optional[int] = None
     user_id: Optional[int] = None
     route_id: Optional[int] = None
 
-class LocationComment(BaseModel):
+class LocationCommentBase(BaseModel):
     comment_id: Optional[int] = None
-    user_id: Optional[int] = None
-    route_id: Optional[int] = None
+    user_id: int
+    location_id: int
     comment: str
-    date: str
+    date: Optional[str] = None
