@@ -30,6 +30,18 @@ def get_country_route(db: db_dependency):
         raise HTTPException(status_code=404, detail="Country not found")
     return country_info
 
+# SAVE LOCATION --------------------------------------------------------------------
+@router.post("/save_location/", response_model=UserBase)
+def save_location(db: db_dependency, user_id : int, location_id: int):
+    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
+    if not location:
+        raise HTTPException(status_code=404, detail="Location id not found")
+    
+    db.add(location)
+    db.commit()
+    db.refresh(location)
+    return location
+
 # ROUTE ROUTES ---------------------------------------------------------------------
 @router.get("/route/more_likes/")
 def get_media_more_likes_route(db: db_dependency):
@@ -68,7 +80,8 @@ def get_media_route(db: db_dependency):
 
 @router.get("/route/{country_name}")
 def get_route_by_country_route(country_name: str, db: db_dependency):
-    route_info = db.query(routeM.Route).filter(models.Route.country_name == country_name).all()
+    country = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first()
+    route_info = db.query(routeM.Route).filter(routeModel.Route.country_id == country.id).all()
     responses = []
     for route in route_info:
         locations = []
@@ -115,7 +128,6 @@ def save_route(db:db_dependency, country_name:str, route: RouteBase = Depends())
 
 # LOCATION ROUTES ---------------------------------------------------------------------
 
-
 @router.get("/location")
 def get_location_route(db: db_dependency): 
     location_info = db.query(locationModel.Location).all()
@@ -125,6 +137,7 @@ def get_location_route(db: db_dependency):
     
     for loc in location_info:
         loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
+        loc.comments = db.query(locationCommnetModel.Location_comment).filter(locationCommnetModel.Location_comment.location_id == loc.id).all()
         responses.append(loc)
     return responses
 
@@ -137,6 +150,7 @@ def get_location_route(country_name:str, db: db_dependency):
         raise HTTPException(status_code=404, detail="Location not found")
     for loc in location_info:
         loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
+        loc.comments = db.query(locationCommnetModel.Location_comment).filter(locationCommnetModel.Location_comment.location_id == loc.id).all()
         responses.append(loc)
     return responses
 
@@ -149,6 +163,7 @@ def get_location_route(loc_id:int, db: db_dependency):
         raise HTTPException(status_code=404, detail="Location not found")
     for loc in location_info:
         loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
+        loc.comments = db.query(locationCommnetModel.Location_comment).filter(locationCommnetModel.Location_comment.location_id == loc.id).all()
         responses.append(loc)
     return responses
 
@@ -198,18 +213,22 @@ async def create_location_location( country_name: str, db: db_dependency, image_
 
 @router.post("/add_comment", response_model=LocationCommentBase)
 async def create_location_location( db: db_dependency, comment: LocationCommentBase):
-    date_now = datetime.now().date()
+    date_now = datetime.now()
+    loc_id_exists = db.query(locationModel.Location).filter(locationModel.Location.id == comment.location_id).first()
+    if not loc_id_exists:
+        raise HTTPException(status_code=404, detail="Location id not found")
+
     db_comment = locationCommnetModel.Location_comment(
         user_id = comment.user_id,
         location_id = comment.location_id,
         comment = comment.comment,
-        date = datetime.now().date()
+        date = date_now
     )
-    print(datetime.now().date())
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
-    return db_comment
+    db.close()
+    return JSONResponse( status_code=201, content="Comment posted successfully")
 
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
