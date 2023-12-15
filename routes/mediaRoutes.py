@@ -81,6 +81,9 @@ def get_media_route(db: db_dependency):
 @router.get("/route/{country_name}")
 def get_route_by_country_route(country_name: str, db: db_dependency):
     country = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first()
+    if country is None:
+        raise HTTPException(status_code=404, detail="Country not foundd")
+    
     route_info = db.query(routeM.Route).filter(routeModel.Route.country_id == country.id).all()
     responses = []
     for route in route_info:
@@ -129,44 +132,56 @@ def save_route(db:db_dependency, country_name:str, route: RouteBase = Depends())
 # LOCATION ROUTES ---------------------------------------------------------------------
 
 @router.get("/location")
-def get_location_route(db: db_dependency): 
+def get_location(db: db_dependency): 
     location_info = db.query(locationModel.Location).all()
     responses = []
     if not location_info:
         raise HTTPException(status_code=404, detail="Location not found")
     
     for loc in location_info:
-        loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
-        loc.comments = db.query(locationCommnetModel.Location_comment).filter(locationCommnetModel.Location_comment.location_id == loc.id).all()
+        db_image = db.query(imageModel.Image.image_uri).filter(imageModel.Image.id == loc.image_id).first()
+        if db_image is not None:
+            loc.image = db_image[0]
+        else:
+            loc.image = []
         responses.append(loc)
     return responses
 
 @router.get("/location/{country_name}")
 def get_location_route(country_name:str, db: db_dependency):
-    location_info = db.query(locationModel.Location).filter(locationModel.Location.country_id == db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id).all()
-    
+    country = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first()
+    if country is None:
+        raise HTTPException(status_code=404, detail="Country not foundasdasdsad")
+
+    location_info = db.query(locationModel.Location).filter(locationModel.Location.country_id == country.id).all()
     responses = []
     if not location_info:
         raise HTTPException(status_code=404, detail="Location not found")
+
     for loc in location_info:
-        loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
-        loc.comments = db.query(locationCommnetModel.Location_comment).filter(locationCommnetModel.Location_comment.location_id == loc.id).all()
+        db_image = db.query(imageModel.Image.image_uri).filter(imageModel.Image.id == loc.image_id).first()
+        if db_image is not None:
+            loc.image = db_image[0]
+        else:
+            loc.image = []
         responses.append(loc)
     return responses
 
-@router.get("/location/{loc_id}")
-def get_location_route(loc_id:int, db: db_dependency):
+@router.get("/location/id/{loc_id}")
+def get_location_by_id(loc_id:int, db: db_dependency):
     location_info = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
     
     responses = []
-    if not location_info:
+    if location_info is None:
         raise HTTPException(status_code=404, detail="Location not found")
-    for loc in location_info:
-        loc.image = db.query(imageModel.Image).filter(imageModel.Image.id == loc.image_id).first()
-        loc.comments = db.query(locationCommnetModel.Location_comment).filter(locationCommnetModel.Location_comment.location_id == loc.id).all()
-        responses.append(loc)
+    else:
+        image = db.query(imageModel.Image).filter(imageModel.Image.id == location_info.image_id).first().image_uri
+        if image is not None:
+            location_info.image = image
+        else:
+            location_info.image = []
+        responses.append(location_info)
     return responses
-
 
 @router.post("/create_location/{country_name}", response_model=LocationBase)
 async def create_location_location( country_name: str, db: db_dependency, image_files: List[str], location: LocationBase):
