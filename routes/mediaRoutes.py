@@ -299,6 +299,7 @@ async def create_location_location( country_name: str, db: db_dependency, image_
     db.refresh(db_location)
     return JSONResponse( status_code=201, content="Location created successfully")
 
+#DONT WORK
 @router.post("/add_comment", response_model=LocationCommentBase)
 async def create_location_location( db: db_dependency, comment: LocationCommentBase):
     date_now = datetime.now()
