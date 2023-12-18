@@ -52,6 +52,27 @@ def save_location(db: db_dependency, user_id : int, location_id: int):
         db.refresh(user)
         return user
     
+# SAVE ROUTE --------------------------------------------------------------------
+@router.patch("/save/route/")
+def save_location(db: db_dependency, user_id : int, route_id: int):
+    route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+    saved_route = user.saved_routes
+
+    if not route:
+        raise HTTPException(status_code=404, detail="Route id not found")
+    elif not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif route_id in saved_route:
+        raise HTTPException(status_code=404, detail="Route already saved")
+    else :
+        new_data = copy.copy(user.saved_routes)
+        new_data.append(route_id)
+        user.saved_routes = new_data
+        db.commit()
+        db.refresh(user)
+        return user
+    
 # UNSAVE LOCATION --------------------------------------------------------------------
 @router.patch("/unsave/location/")
 def save_location(db: db_dependency, user_id : int, location_id: int):
@@ -69,6 +90,27 @@ def save_location(db: db_dependency, user_id : int, location_id: int):
         new_data = copy.copy(user.saved_locations)
         new_data.remove(location_id)
         user.saved_locations = new_data
+        db.commit()
+        db.refresh(user)
+        return user
+
+# UNSAVE ROUTE --------------------------------------------------------------------
+@router.patch("/unsave/route/")
+def unsave_route(db: db_dependency, user_id : int, route_id: int):
+    route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+    saved_route = user.saved_routes
+
+    if not route:
+        raise HTTPException(status_code=404, detail="Route id not found")
+    elif not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif route_id not in saved_route:
+        raise HTTPException(status_code=404, detail="Route already unsaved")
+    else :
+        new_data = copy.copy(user.saved_routes)
+        new_data.remove(route_id)
+        user.saved_routes = new_data
         db.commit()
         db.refresh(user)
         return user
