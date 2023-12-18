@@ -1,3 +1,4 @@
+import copy
 from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, Form, UploadFile
 from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase, LocationCommentBase
 import models 
@@ -5,7 +6,7 @@ from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, select
 from models import routeModel as routeM
-from models import locationModel, imageModel, coutryModel, routeLikesModel, routeModel, locationCommnetModel
+from models import userModel, locationModel, imageModel, coutryModel, routeLikesModel, routeModel, locationCommnetModel
 from datetime import datetime
 import base64
 from imagekitio import ImageKit
@@ -31,16 +32,46 @@ def get_country_route(db: db_dependency):
     return country_info
 
 # SAVE LOCATION --------------------------------------------------------------------
-@router.post("/save_location/", response_model=UserBase)
+@router.patch("/save/location/")
 def save_location(db: db_dependency, user_id : int, location_id: int):
     location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+    saved_loc = user.saved_locations
+
     if not location:
         raise HTTPException(status_code=404, detail="Location id not found")
+    elif not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif location_id in saved_loc:
+        raise HTTPException(status_code=404, detail="Location already saved")
+    else :
+        new_data = copy.copy(user.saved_locations)
+        new_data.append(location_id)
+        user.saved_locations = new_data
+        db.commit()
+        db.refresh(user)
+        return user
     
-    db.add(location)
-    db.commit()
-    db.refresh(location)
-    return location
+# UNSAVE LOCATION --------------------------------------------------------------------
+@router.patch("/unsave/location/")
+def save_location(db: db_dependency, user_id : int, location_id: int):
+    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+    saved_loc = user.saved_locations
+
+    if not location:
+        raise HTTPException(status_code=404, detail="Location id not found")
+    elif not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif location_id not in saved_loc:
+        raise HTTPException(status_code=404, detail="Location already unsaved")
+    else :
+        new_data = copy.copy(user.saved_locations)
+        new_data.remove(location_id)
+        user.saved_locations = new_data
+        db.commit()
+        db.refresh(user)
+        return user
 
 # ROUTE ROUTES ---------------------------------------------------------------------
 @router.get("/route/more_likes/")
