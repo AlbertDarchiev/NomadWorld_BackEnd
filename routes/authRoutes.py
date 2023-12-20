@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from pydantic import BaseModel
-from typing import List, Annotated
+from typing import List, Annotated, Optional
 from models import userModel as userM 
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
@@ -86,7 +86,36 @@ def login(user:UserBase, db:db_dependency):
     
     if not hasher.verify_password(user.password, db_user.password):
         raise HTTPException(status_code=401, detail="Incorrect password")
-    
-
-
     return JSONResponse(status_code=200, content="User logged successfully")
+
+@router.patch("/users/modify/{user_id}")
+def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, mail: Optional[str] = None):
+    db_user = db.query(userM.Users).filter(userM.Users.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if username is not None:
+        db_username_exist = db.query(userM.Users).filter(userM.Users.username == username).first()
+        if db_username_exist:
+            raise HTTPException(status_code=404, detail="Username already exists")
+        else:
+            db_user.username = username
+    if mail is not None:
+        if not email.ESender.check(mail):
+            raise HTTPException(status_code=400, detail="Invalid email")
+        else:
+            db_user.email = mail
+    db.commit()
+    db.refresh(db_user)
+    db.close()
+    return JSONResponse(status_code=200, content="User updated successfully")
+
+@router.patch("/users/modify_pass/{user_id}")
+def change_pass(user_id: int, user:UserBase, db:db_dependency):
+    db_user = db.query(userM.Users).filter(userM.Users.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db_user.password = hasher.get_password_hash(user.password)
+    db.commit()
+    db.refresh(db_user)
+    db.close()
+    return JSONResponse(status_code=200, content="Password changed successfully")
