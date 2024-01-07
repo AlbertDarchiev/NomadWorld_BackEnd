@@ -1,3 +1,4 @@
+import base64
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from pydantic import BaseModel
 from typing import List, Annotated, Optional
@@ -6,7 +7,8 @@ from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
 from security import hasher as hash
 from fastapi.responses import JSONResponse
-
+from imagekitio import ImageKit
+from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
 from emailSender import sender as email
 
 #userModel.Base.metadata.create_all(bind=engine)    
@@ -113,9 +115,37 @@ def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, m
 def change_pass(user_id: int, user:UserBase, db:db_dependency):
     db_user = db.query(userM.Users).filter(userM.Users.id == user_id).first()
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User ID not found")
     db_user.password = hasher.get_password_hash(user.password)
     db.commit()
     db.refresh(db_user)
     db.close()
     return JSONResponse(status_code=200, content="Password changed successfully")
+
+@router.patch("/users/modify_image/{user_id}")
+async def change_img(user_id: int, db:db_dependency, image_file: str):
+    db_user = db.query(userM.Users).filter(userM.Users.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User ID not found")
+    image_name = f"image_user_{user_id}.png"
+    await upload_file("profile_images", image_name, image_file)
+    db_user.img = f"https://ik.imagekit.io/albertITB/profile_images/{image_name}"
+    db.commit()
+    db.refresh(db_user)
+    db.close()
+    return JSONResponse(status_code=200, content="Image changed successfully")
+
+async def upload_file(foldername: str, image_name:str, file: base64):
+    imagekit = ImageKit(
+        private_key='private_iDHFe+AfM2FSVeBe1o11jqllHB4=',
+        public_key='public_SWebOtYLMFIFinKilKGXkwGFAoM=',
+        url_endpoint='https://ik.imagekit.io/albertITB'
+    )
+
+    imagekit.upload(
+        file, 
+        file_name=image_name,
+        options=UploadFileRequestOptions( 
+            use_unique_file_name=False,
+            folder=foldername
+        ))
