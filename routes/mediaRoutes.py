@@ -6,7 +6,7 @@ from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, select
 from models import routeModel as routeM
-from models import userModel, locationModel, imageModel, coutryModel, routeLikesModel, routeModel, locationCommnetModel
+from models import userModel, locationModel, imageModel, coutryModel, routeLikesModel, routeModel, locationCommentModel
 from datetime import datetime
 import base64
 from imagekitio import ImageKit

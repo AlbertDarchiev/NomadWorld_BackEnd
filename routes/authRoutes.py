@@ -128,11 +128,8 @@ def reset_pass(user_id: int, db:db_dependency):
         pwo = PasswordGenerator()
         pwo.maxlen = 13
         newpass = pwo.generate()
-        subject = f"Hola {db_user.username}, hemos restablecido tu contraseña"
-        #body = f"Esta es tu nueva contraseña: {}"
-        receiver = db_user.email
-        print(newpass)
-        #email.ESender.send_email(receiver, subject, body)
+        print(pwo.generate())
+
 
 @router.patch("/users/modify/{user_id}")
 def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, mail: Optional[str] = None):
