@@ -307,7 +307,7 @@ async def create_location_location( db: db_dependency, comment: LocationCommentB
     if not loc_id_exists:
         raise HTTPException(status_code=404, detail="Location id not found")
 
-    db_comment = locationCommnetModel.Location_comment(
+    db_comment = locationCommentModel.Location_comment(
         user_id = comment.user_id,
         location_id = comment.location_id,
         comment = comment.comment,
