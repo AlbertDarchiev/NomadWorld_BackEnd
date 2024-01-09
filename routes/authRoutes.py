@@ -126,10 +126,20 @@ def reset_pass(user_id: int, db:db_dependency):
         raise HTTPException(status_code=404, detail="User not found")
     else:
         pwo = PasswordGenerator()
-        pwo.maxlen = 13
+        pwo.maxlen = 15
+        pwo.minlen = 10
         newpass = pwo.generate()
-        print(pwo.generate())
+        subject = f"Hola {db_user.username}, hemos restablecido tu contraseña"
+        body = f"Esta es tu nueva contraseña: {newpass}"
+        receiver = db_user.email
+        #print(newpass)
+        email.ESender.send_email(receiver, subject, body)
 
+        db_user.password = hasher.get_password_hash(newpass)
+        db.commit()
+        db.refresh(db_user)
+        db.close()
+        return JSONResponse(status_code=200, content="Password restored successfully")
 
 @router.patch("/users/modify/{user_id}")
 def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, mail: Optional[str] = None):
@@ -153,15 +163,18 @@ def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, m
     return JSONResponse(status_code=200, content="User updated successfully")
 
 @router.patch("/users/modify_pass/{user_id}")
-def change_pass(user_id: int, user:UserBase, db:db_dependency):
+def change_pass(user_id: int, current_pass: str, new_pass: str, db:db_dependency):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User ID not found")
-    db_user.password = hasher.get_password_hash(user.password)
-    db.commit()
-    db.refresh(db_user)
-    db.close()
-    return JSONResponse(status_code=200, content="Password changed successfully")
+    if not hasher.verify_password(current_pass, db_user.password):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    else:
+        db_user.password = hasher.get_password_hash(new_pass)
+        db.commit()
+        db.refresh(db_user)
+        db.close()
+        return JSONResponse(status_code=200, content="Password changed successfully")
 
 @router.patch("/users/modify_image/{user_id}")
 async def change_img(user_id: int, db:db_dependency, image_file: str):
