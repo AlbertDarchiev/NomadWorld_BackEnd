@@ -1,12 +1,12 @@
 import copy
 from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, Form, UploadFile
-from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase, LocationCommentBase
+from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase, LocationCommentBase, LocationLikeBase, RouteCommentBase
 import models 
 from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, select
 from models import routeModel as routeM
-from models import userModel, locationModel, imageModel, coutryModel, routeLikesModel, routeModel, locationCommentModel
+from models import userModel, locationModel, imageModel, coutryModel, routeLikesModel, locationLikesModel, routeModel, locationCommentModel,routeCommentModel
 from datetime import datetime
 import base64
 from imagekitio import ImageKit
@@ -299,9 +299,9 @@ async def create_location_location( country_name: str, db: db_dependency, image_
     db.refresh(db_location)
     return JSONResponse( status_code=201, content="Location created successfully")
 
-#DONT WORK
-@router.post("/add_comment", response_model=LocationCommentBase)
-async def create_location_location( db: db_dependency, comment: LocationCommentBase):
+#Comment location
+@router.post("/add_comment/location", response_model=LocationCommentBase)
+def create_location_location( db: db_dependency, comment: LocationCommentBase):
     date_now = datetime.now()
     loc_id_exists = db.query(locationModel.Location).filter(locationModel.Location.id == comment.location_id).first()
     if not loc_id_exists:
@@ -319,6 +319,113 @@ async def create_location_location( db: db_dependency, comment: LocationCommentB
     db.close()
     return JSONResponse( status_code=201, content="Comment posted successfully")
 
+@router.get("/comment/location/{loc_id}")
+def get_comment_location(loc_id:int, db: db_dependency):
+    location_info = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+    if not location_info:
+        raise HTTPException(status_code=404, detail="Location not found")
+    else:
+        comments = db.query(locationCommentModel.Location_comment).filter(locationCommentModel.Location_comment.location_id == loc_id).all()
+        if not comments:
+            raise HTTPException(status_code=404, detail="Comments not found")
+        else:
+            return comments
+#COMMENT ROUTE´
+@router.post("/add_comment/route", response_model=RouteCommentBase)
+def create_route_comment(db: db_dependency, comment: RouteCommentBase):
+    date_now = datetime.now()
+    route_id_exists = db.query(routeModel.Route).filter(routeModel.Route.id == comment.route_id).first()
+    if not route_id_exists:
+        raise HTTPException(status_code=404, detail="Route id not found")
+
+    db_comment = routeCommentModel.Route_comment(
+        user_id = comment.user_id,
+        route_id = comment.route_id,
+        comment = comment.comment,
+        date = date_now
+    )
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    db.close()
+    return JSONResponse( status_code=201, content="Comment posted successfully")
+
+@router.get("/comment/route/{route_id}")
+def get_comment_route(route_id:int, db: db_dependency):
+    route_info = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
+    if not route_info:
+        raise HTTPException(status_code=404, detail="Route not found")
+    else:
+        comments = db.query(routeCommentModel.Route_comment).filter(routeCommentModel.Route_comment.route_id == route_id).all()
+        if not comments:
+            raise HTTPException(status_code=404, detail="Comments not found")
+        else:
+            return comments
+
+@router.delete("/delete_location_comment/{comment_id}")
+def delete_comment(comment_id: int, db: db_dependency):
+    comment = db.query(locationCommentModel.Location_comment).filter(locationCommentModel.Location_comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    else:
+        db.delete(comment)
+        db.commit()
+        return JSONResponse( status_code=201, content="Comment deleted successfully")
+
+@router.delete("/delete_route_comment/{comment_id}")
+def delete_comment(comment_id: int, db: db_dependency):
+    comment = db.query(routeCommentModel.Route_comment).filter(routeCommentModel.Route_comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    else:
+        db.delete(comment)
+        db.commit()
+        return JSONResponse( status_code=201, content="Comment deleted successfully")
+    
+#LIKES LOCATION       
+@router.post("/like/location/")
+def like_location(user_id: int, loc_id:int, db: db_dependency):
+    if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
+        raise HTTPException(status_code=400, detail="User ID not found")
+    if not db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first():
+        raise HTTPException(status_code=400, detail="Location ID not found")
+    if db.query(locationLikesModel.LocationLikes).filter(locationLikesModel.LocationLikes.user_id == user_id).filter(locationLikesModel.LocationLikes.location_id == loc_id).first():
+        raise HTTPException(status_code=400, detail="Already liked")
+
+    db_like = locationLikesModel.LocationLikes(
+        user_id = user_id,
+        location_id = loc_id
+    )
+    db.add(db_like)
+    db.commit()
+    db.refresh(db_like)
+    db.close()
+    return JSONResponse( status_code=201, content="Location liked successfully")
+
+
+@router.delete("/unlike/location/")
+def unlike_location(user_id: int, loc_id:int, db: db_dependency):
+    if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
+        raise HTTPException(status_code=400, detail="User ID not found")
+    if not db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first():
+        raise HTTPException(status_code=400, detail="Location ID not found")
+    db_like = db.query(locationLikesModel.LocationLikes).filter(locationLikesModel.LocationLikes.user_id == user_id).filter(locationLikesModel.LocationLikes.location_id == loc_id).first()
+    if not db_like:
+        raise HTTPException(status_code=400, detail="Like not found")
+    db.delete(db_like)
+    db.commit()
+    db.close()
+    return JSONResponse( status_code=201, content="Location unliked successfully")
+
+@router.get("/likes/location/{loc_id}")
+def get_loc_likes(loc_id:int,  db: db_dependency):
+    loc_Model = locationLikesModel.LocationLikes
+    liked_loc = db.query(loc_Model).filter(loc_Model.location_id == loc_id).all()
+    if not liked_loc:
+        raise HTTPException(status_code=400, detail="Likes not found")
+    else:
+        return liked_loc
+    
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
         private_key='private_iDHFe+AfM2FSVeBe1o11jqllHB4=',
@@ -327,7 +434,6 @@ async def upload_file(foldername: str, image_name:str, file: base64):
     )
     #content = await file
     #image_base64 = base64.b64encode(content).decode("utf-8")
-
     imagekit.upload(
         file, #se especifica el archivo a subir
         file_name=image_name, #se especifica el nombre del archivo

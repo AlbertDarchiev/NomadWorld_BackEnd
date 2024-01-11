@@ -62,7 +62,7 @@ class RouteCommentBase(BaseModel):
 class LocationLikeBase(BaseModel):
     like_id: Optional[int] = None
     user_id: Optional[int] = None
-    route_id: Optional[int] = None
+    location_id: Optional[int] = None
 
 class LocationCommentBase(BaseModel):
     comment_id: Optional[int] = None
@@ -70,3 +70,10 @@ class LocationCommentBase(BaseModel):
     location_id: int
     comment: str
     date: Optional[str] = None
+
+class RouteCommentBase(BaseModel):
+    comment_id: Optional[int] = None
+    user_id: int
+    route_id: int
+    comment: str
+    date: Optional[str] = None    
