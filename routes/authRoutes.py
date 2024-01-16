@@ -2,7 +2,7 @@ import base64
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from pydantic import BaseModel
 from typing import List, Annotated, Optional
-from models import locationModel, userModel, imageModel
+from models import locationModel, userModel, imageModel, routeModel
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
 from security import hasher as hash
@@ -97,13 +97,18 @@ async def login(user:UserBase, db:db_dependency):
     
     for route in db_user.saved_routes:
         route_locations = []
-        for i, loc in enumerate(route.location_id):
-            location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
-            image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
-            location.image = image.image_uri
-            route_locations.append(location)
-        route.location_id = route_locations
-        routes.append(route)
+        db_route = db.query(routeModel.Route).filter(routeModel.Route.id == route).first()
+        if db_route is not None:
+            for loc_id in db_route.location_id:
+                db_loc = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+                if db_loc is not None:
+                    db_image = db.query(imageModel.Image.image_uri).filter(imageModel.Image.id == db_loc.image_id).first()
+                    if db_image is not None:
+                        db_loc.image = db_image[0]
+                    else:
+                        db_loc.image = []
+                    route_locations.append(db_loc)
+        routes.append(db_route)
 
     for loc_id in db_user.saved_locations:
         db_loc = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
