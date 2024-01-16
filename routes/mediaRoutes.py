@@ -134,7 +134,7 @@ def get_media_more_likes_route(db: db_dependency):
         responses.append(route)
     return responses
 
-@router.get("/route")    
+@router.get("/route/")    
 def get_media_route(db: db_dependency):
     route_info = db.query(routeModel.Route).all()
     responses = []
@@ -142,14 +142,22 @@ def get_media_route(db: db_dependency):
         raise HTTPException(status_code=404, detail="Route not found")
     for route in route_info:
         locations = []
-        for i, loc in enumerate(route.location_id):
-            location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
-            image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
-            location.image = image.image_uri
-            locations.append(location)
+        for i, loc_id in enumerate(route.location_id):
+            location = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+            if location is not None:
+                image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
+                if image is not None:
+                    location.image = image.image_uri
+                    locations.append(location)
+                else:
+                    print(f"Image not found for location {location.id}")
+            else:
+                print(f"Location not found for route {route.id}, location_id: {loc_id}")
         route.location_id = locations
         responses.append(route)
+    
     return responses
+
 
 @router.get("/route/{country_name}")
 def get_route_by_country_route(country_name: str, db: db_dependency):
@@ -159,16 +167,25 @@ def get_route_by_country_route(country_name: str, db: db_dependency):
     
     route_info = db.query(routeM.Route).filter(routeModel.Route.country_id == country.id).all()
     responses = []
+    if not route_info:
+        raise HTTPException(status_code=404, detail="Route not found")
     for route in route_info:
         locations = []
-        for i, loc in enumerate(route.location_id):
-            location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
-            image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
-            location.image = image.image_uri
-            locations.append(location)
+        for i, loc_id in enumerate(route.location_id):
+            location = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+            if location is not None:
+                image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
+                if image is not None:
+                    location.image = image.image_uri
+                    locations.append(location)
+                else:
+                    print(f"Image not found for location {location.id}")
+            else:        
+                print(f"Location not found for route {route.id}, location_id: {loc_id}")
         route.location_id = locations
         responses.append(route)
-    return route_info
+    
+    return responses
 
 @router.post("/create_route/{country_name}", response_model=RouteBase)
 def create_route_route(country_name: str, route: RouteBase, db: db_dependency):
@@ -402,7 +419,6 @@ def like_location(user_id: int, loc_id:int, db: db_dependency):
     db.close()
     return JSONResponse( status_code=201, content="Location liked successfully")
 
-
 @router.delete("/unlike/location/")
 def unlike_location(user_id: int, loc_id:int, db: db_dependency):
     if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
@@ -425,7 +441,50 @@ def get_loc_likes(loc_id:int,  db: db_dependency):
         raise HTTPException(status_code=400, detail="Likes not found")
     else:
         return liked_loc
-    
+
+#LIKES ROUTE       
+@router.post("/like/route/")
+def like_route(user_id: int, route_id:int, db: db_dependency):
+    if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
+        raise HTTPException(status_code=400, detail="User ID not found")
+    if not db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first():
+        raise HTTPException(status_code=400, detail="Route ID not found")
+    if db.query(routeLikesModel.RouteLikes).filter(routeLikesModel.RouteLikes.user_id == user_id).filter(routeLikesModel.RouteLikes.route_id == route_id).first():
+        raise HTTPException(status_code=400, detail="Already liked")
+
+    db_like = routeLikesModel.RouteLikes(
+        user_id = user_id,
+        route_id = route_id
+    )
+    db.add(db_like)
+    db.commit()
+    db.refresh(db_like)
+    db.close()
+    return JSONResponse( status_code=201, content="Route liked successfully")
+
+@router.delete("/unlike/route/")
+def unlike_route(user_id: int, route_id:int, db: db_dependency):
+    if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
+        raise HTTPException(status_code=400, detail="User ID not found")
+    if not db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first():
+        raise HTTPException(status_code=400, detail="Route ID not found")
+    db_like = db.query(routeLikesModel.RouteLikes).filter(routeLikesModel.RouteLikes.user_id == user_id).filter(routeLikesModel.RouteLikes.route_id == route_id).first()
+    if not db_like:
+        raise HTTPException(status_code=400, detail="Like not found")
+    db.delete(db_like)
+    db.commit()
+    db.close()
+    return JSONResponse( status_code=201, content="Route unliked successfully")
+
+@router.get("/likes/route/{route_id}")
+def get_lroute_likes(route_id:int,  db: db_dependency):
+    route_Model = routeLikesModel.RouteLikes
+    liked_route = db.query(route_Model).filter(route_Model.location_id == route_id).all()
+    if not liked_route:
+        raise HTTPException(status_code=400, detail="Likes not found")
+    else:
+        return liked_route
+
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
         private_key='private_iDHFe+AfM2FSVeBe1o11jqllHB4=',
