@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 router = APIRouter()
+routerLoc = APIRouter()
 
 def get_db():
     try:
@@ -32,7 +33,7 @@ def get_country_route(db: db_dependency):
     return country_info
 
 # SAVE LOCATION --------------------------------------------------------------------
-@router.patch("/save/location/")
+@routerLoc.patch("/save/location/")
 def save_location(db: db_dependency, user_id : int, location_id: int):
     location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
     user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
@@ -74,7 +75,7 @@ def save_location(db: db_dependency, user_id : int, route_id: int):
         return user
     
 # UNSAVE LOCATION --------------------------------------------------------------------
-@router.patch("/unsave/location/")
+@routerLoc.patch("/unsave/location/")
 def save_location(db: db_dependency, user_id : int, location_id: int):
     location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
     user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
@@ -221,7 +222,7 @@ def save_route(db:db_dependency, country_name:str, route: RouteBase = Depends())
 
 # LOCATION ROUTES ---------------------------------------------------------------------
 
-@router.get("/location")
+@routerLoc.get("/location")
 def get_location(db: db_dependency): 
     location_info = db.query(locationModel.Location).all()
     responses = []
@@ -237,7 +238,7 @@ def get_location(db: db_dependency):
         responses.append(loc)
     return responses
 
-@router.get("/location/{country_name}")
+@routerLoc.get("/location/{country_name}")
 def get_location_route(country_name:str, db: db_dependency):
     country = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first()
     if country is None:
@@ -257,7 +258,7 @@ def get_location_route(country_name:str, db: db_dependency):
         responses.append(loc)
     return responses
 
-@router.get("/location/id/{loc_id}")
+@routerLoc.get("/location/id/{loc_id}")
 def get_location_by_id(loc_id:int, db: db_dependency):
     location_info = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
     
@@ -273,7 +274,7 @@ def get_location_by_id(loc_id:int, db: db_dependency):
         responses.append(location_info)
     return responses
 
-@router.post("/create_location/{country_name}", response_model=LocationBase)
+@routerLoc.post("/create_location/{country_name}", response_model=LocationBase)
 async def create_location_location( country_name: str, db: db_dependency, image_files: List[str], location: LocationBase):
     
     loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -317,7 +318,7 @@ async def create_location_location( country_name: str, db: db_dependency, image_
     return JSONResponse( status_code=201, content="Location created successfully")
 
 #Comment location
-@router.post("/add_comment/location", response_model=LocationCommentBase)
+@routerLoc.post("/add_comment/location", response_model=LocationCommentBase)
 def create_location_location( db: db_dependency, comment: LocationCommentBase):
     date_now = datetime.now()
     loc_id_exists = db.query(locationModel.Location).filter(locationModel.Location.id == comment.location_id).first()
@@ -336,7 +337,7 @@ def create_location_location( db: db_dependency, comment: LocationCommentBase):
     db.close()
     return JSONResponse( status_code=201, content="Comment posted successfully")
 
-@router.get("/comment/location/{loc_id}")
+@routerLoc.get("/comment/location/{loc_id}")
 def get_comment_location(loc_id:int, db: db_dependency):
     location_info = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
     if not location_info:
@@ -379,7 +380,7 @@ def get_comment_route(route_id:int, db: db_dependency):
         else:
             return comments
 
-@router.delete("/delete_location_comment/{comment_id}")
+@routerLoc.delete("/delete_location_comment/{comment_id}")
 def delete_comment(comment_id: int, db: db_dependency):
     comment = db.query(locationCommentModel.Location_comment).filter(locationCommentModel.Location_comment.id == comment_id).first()
     if not comment:
@@ -400,7 +401,7 @@ def delete_comment(comment_id: int, db: db_dependency):
         return JSONResponse( status_code=201, content="Comment deleted successfully")
     
 #LIKES LOCATION       
-@router.post("/like/location/")
+@routerLoc.post("/like/location/")
 def like_location(user_id: int, loc_id:int, db: db_dependency):
     if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
         raise HTTPException(status_code=400, detail="User ID not found")
@@ -419,7 +420,7 @@ def like_location(user_id: int, loc_id:int, db: db_dependency):
     db.close()
     return JSONResponse( status_code=201, content="Location liked successfully")
 
-@router.delete("/unlike/location/")
+@routerLoc.delete("/unlike/location/")
 def unlike_location(user_id: int, loc_id:int, db: db_dependency):
     if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
         raise HTTPException(status_code=400, detail="User ID not found")
@@ -433,7 +434,7 @@ def unlike_location(user_id: int, loc_id:int, db: db_dependency):
     db.close()
     return JSONResponse( status_code=201, content="Location unliked successfully")
 
-@router.get("/likes/location/{loc_id}")
+@routerLoc.get("/likes/location/{loc_id}")
 def get_loc_likes(loc_id:int,  db: db_dependency):
     loc_Model = locationLikesModel.LocationLikes
     liked_loc = db.query(loc_Model).filter(loc_Model.location_id == loc_id).all()

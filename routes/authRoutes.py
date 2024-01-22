@@ -18,7 +18,6 @@ hasher = hash.Hasher()
 def_profile_img = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
 
 router = APIRouter()
-
 def get_db():
     try:
         db = SessionLocal()
@@ -124,7 +123,12 @@ async def login(user:UserBase, db:db_dependency):
     db_user.saved_locations = locations
     return db_user
 
-@router.patch("/users/restore_pass/{user_id}")
+
+
+# USER PARAMS
+router2 = APIRouter()
+
+@router2.patch("/users/restore_pass/{user_id}")
 def reset_pass(user_id: int, db:db_dependency):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
@@ -146,7 +150,7 @@ def reset_pass(user_id: int, db:db_dependency):
         db.close()
         return JSONResponse(status_code=200, content="Password restored successfully")
 
-@router.patch("/users/modify/{user_id}")
+@router2.patch("/users/modify/{user_id}")
 def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, mail: Optional[str] = None):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
@@ -167,7 +171,7 @@ def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, m
     db.close()
     return JSONResponse(status_code=200, content="User updated successfully")
 
-@router.patch("/users/modify_pass/{user_id}")
+@router2.patch("/users/modify_pass/{user_id}")
 def change_pass(user_id: int, current_pass: str, new_pass: str, db:db_dependency):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
@@ -181,7 +185,7 @@ def change_pass(user_id: int, current_pass: str, new_pass: str, db:db_dependency
         db.close()
         return JSONResponse(status_code=200, content="Password changed successfully")
 
-@router.patch("/users/modify_image/{user_id}")
+@router2.patch("/users/modify_image/{user_id}")
 async def change_img(user_id: int, db:db_dependency, image_file: str):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
