@@ -35,17 +35,16 @@ def get_country_route(db: db_dependency):
 # SAVE LOCATION --------------------------------------------------------------------
 @routerLoc.patch("/save/location/")
 def save_location(db: db_dependency, user_id : int, location_id: int):
-    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
     user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    saved_loc = user.saved_locations
+    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
 
-    if not location:
-        raise HTTPException(status_code=404, detail="Location id not found")
-    elif not user:
+    if not user:
         raise HTTPException(status_code=404, detail="User id not found")
-    elif location_id in saved_loc:
+    elif not location:
+        raise HTTPException(status_code=404, detail="Location id not found")
+    elif location_id in user.saved_locations:
         raise HTTPException(status_code=404, detail="Location already saved")
-    else :
+    else:
         new_data = copy.copy(user.saved_locations)
         new_data.append(location_id)
         user.saved_locations = new_data
@@ -58,13 +57,12 @@ def save_location(db: db_dependency, user_id : int, location_id: int):
 def save_location(db: db_dependency, user_id : int, route_id: int):
     route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
     user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    saved_route = user.saved_routes
-
+    
     if not route:
         raise HTTPException(status_code=404, detail="Route id not found")
     elif not user:
         raise HTTPException(status_code=404, detail="User id not found")
-    elif route_id in saved_route:
+    elif route_id in user.saved_routes:
         raise HTTPException(status_code=404, detail="Route already saved")
     else :
         new_data = copy.copy(user.saved_routes)
@@ -79,13 +77,12 @@ def save_location(db: db_dependency, user_id : int, route_id: int):
 def save_location(db: db_dependency, user_id : int, location_id: int):
     location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
     user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    saved_loc = user.saved_locations
 
     if not location:
         raise HTTPException(status_code=404, detail="Location id not found")
     elif not user:
         raise HTTPException(status_code=404, detail="User id not found")
-    elif location_id not in saved_loc:
+    elif location_id not in user.saved_locations:
         raise HTTPException(status_code=404, detail="Location already unsaved")
     else :
         new_data = copy.copy(user.saved_locations)
@@ -100,13 +97,12 @@ def save_location(db: db_dependency, user_id : int, location_id: int):
 def unsave_route(db: db_dependency, user_id : int, route_id: int):
     route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
     user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    saved_route = user.saved_routes
 
     if not route:
         raise HTTPException(status_code=404, detail="Route id not found")
     elif not user:
         raise HTTPException(status_code=404, detail="User id not found")
-    elif route_id not in saved_route:
+    elif route_id not in user.saved_routes:
         raise HTTPException(status_code=404, detail="Route already unsaved")
     else :
         new_data = copy.copy(user.saved_routes)
