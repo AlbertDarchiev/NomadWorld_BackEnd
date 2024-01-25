@@ -106,6 +106,7 @@ async def login(user:UserBase, db:db_dependency):
                         db_loc.image = db_image[0]
                     else:
                         db_loc.image = []
+                    db_route.location_id = (db_loc)
                     route_locations.append(db_loc)
         routes.append(db_route)
 
