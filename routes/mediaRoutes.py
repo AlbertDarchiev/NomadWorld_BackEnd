@@ -115,21 +115,32 @@ def unsave_route(db: db_dependency, user_id : int, route_id: int):
 # ROUTE ROUTES ---------------------------------------------------------------------
 @router.get("/route/more_likes/")
 def get_media_more_likes_route(db: db_dependency):
-    route_info = db.query(routeModel.Route).join(routeLikesModel.RouteLikes).group_by(routeModel.Route.id).order_by(func.count(routeLikesModel.RouteLikes.route_id).desc()).all()
+    # Consulta LEFT JOIN para incluir rutas sin likes
+    route_info = db.query(routeModel.Route, func.count(routeLikesModel.RouteLikes.route_id).label('like_count'))\
+        .outerjoin(routeLikesModel.RouteLikes, routeModel.Route.id == routeLikesModel.RouteLikes.route_id)\
+        .group_by(routeModel.Route.id)\
+        .order_by(desc('like_count'))\
+        .all()
+
     responses = []
     if not route_info:
         raise HTTPException(status_code=404, detail="Route not found")
-    for route in route_info:
+    for route, like_count in route_info:
         print(route.location_id)
         locations = []
-        for i, loc in enumerate(route.location_id):
-            location = db.query(locationModel.Location).filter(locationModel.Location.id == route.location_id[i]).first()
-            image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
-            location.image = image.image_uri
-            locations.append(location)
+        for i, loc_id in enumerate(route.location_id):
+            location = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+            if location:
+                image = db.query(imageModel.Image).filter(imageModel.Image.id == location.image_id).first()
+
+                if image:
+                    location.image = image.image_uri
+                    locations.append(location)
         route.location_id = locations
         responses.append(route)
+
     return responses
+
 
 @router.get("/route/")    
 def get_media_route(db: db_dependency):
