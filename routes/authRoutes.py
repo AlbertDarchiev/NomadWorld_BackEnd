@@ -130,9 +130,9 @@ async def login(user:UserBase, db:db_dependency):
 # USER PARAMS
 router2 = APIRouter()
 
-@router2.patch("/users/restore_pass/{user_id}")
-def reset_pass(user_id: int, db:db_dependency):
-    db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+@router2.patch("/users/restore_pass/{user_mail}")
+def reset_pass(user_mail: str, db:db_dependency):
+    db_user = db.query(userModel.Users).filter(userModel.Users.email == user_mail).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     else:
