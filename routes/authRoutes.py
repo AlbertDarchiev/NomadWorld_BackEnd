@@ -35,8 +35,39 @@ def get_users(db: db_dependency):
 @router.get("/users/{user_id}")
 def get_user(user_id: int, db: db_dependency):
     user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+    routes = []
+    locations = []
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    for route in user.saved_routes:
+        route_locations = []
+        db_route = db.query(routeModel.Route).filter(routeModel.Route.id == route).first()
+        if db_route is not None:
+            for loc_id in db_route.location_id:
+                db_loc = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+                if db_loc is not None:
+                    db_image = db.query(imageModel.Image.image_uri).filter(imageModel.Image.id == db_loc.image_id).first()
+                    if db_image is not None:
+                        db_loc.image = db_image[0]
+                    else:
+                        db_loc.image = []
+                    #db_route.location_id = (db_loc)
+                    route_locations.append(db_loc)
+        db_route.location_id = route_locations
+        routes.append(db_route)
+
+    for loc_id in user.saved_locations:
+        db_loc = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
+        if db_loc is not None:
+            db_image = db.query(imageModel.Image.image_uri).filter(imageModel.Image.id == db_loc.image_id).first()
+            if db_image is not None:
+                db_loc.image = db_image[0]
+            else:
+                db_loc.image = []
+            locations.append(db_loc)
+
+    user.saved_routes = routes
+    user.saved_locations = locations
     return user
 
 
