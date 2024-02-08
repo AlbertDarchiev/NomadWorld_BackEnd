@@ -6,7 +6,7 @@ from models import locationModel, userModel, imageModel, routeModel
 from database import SessionLocal, engine, UserBase
 from sqlalchemy.orm import Session
 from security import hasher as hash
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from imagekitio import ImageKit
 from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
 from emailSender import sender as email
@@ -184,7 +184,7 @@ def reset_pass(user_mail: str, db:db_dependency):
         return JSONResponse(status_code=200, content="Password restored successfully")
 
 @router2.patch("/users/modify/{user_id}")
-def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, mail: Optional[str] = None):
+async def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, new_pass: Optional[str] = None, imageB64: Optional[str] = None):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -194,42 +194,19 @@ def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, m
             raise HTTPException(status_code=404, detail="Username already exists")
         else:
             db_user.username = username
-    if mail is not None:
-        if not email.ESender.check(mail):
-            raise HTTPException(status_code=400, detail="Invalid email")
-        else:
-            db_user.email = mail
+            
+    if new_pass is not None:
+        db_user.password = hasher.get_password_hash(new_pass)
+
+    if imageB64 is not None:
+        image_name = f"image_user_{user_id}.png"
+        await upload_file("profile_images", image_name, imageB64)
+        db_user.img = f"https://ik.imagekit.io/albertITB/profile_images/{image_name}"
+
     db.commit()
     db.refresh(db_user)
     db.close()
     return JSONResponse(status_code=200, content="User updated successfully")
-
-@router2.patch("/users/modify_pass/{user_id}")
-def change_pass(user_id: int, current_pass: str, new_pass: str, db:db_dependency):
-    db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User ID not found")
-    if not hasher.verify_password(current_pass, db_user.password):
-        raise HTTPException(status_code=400, detail="Incorrect password")
-    else:
-        db_user.password = hasher.get_password_hash(new_pass)
-        db.commit()
-        db.refresh(db_user)
-        db.close()
-        return JSONResponse(status_code=200, content="Password changed successfully")
-
-@router2.patch("/users/modify_image/{user_id}")
-async def change_img(user_id: int, db:db_dependency, image_file: str):
-    db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User ID not found")
-    image_name = f"image_user_{user_id}.png"
-    await upload_file("profile_images", image_name, image_file)
-    db_user.img = f"https://ik.imagekit.io/albertITB/profile_images/{image_name}"
-    db.commit()
-    db.refresh(db_user)
-    db.close()
-    return JSONResponse(status_code=200, content="Image changed successfully")
 
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
