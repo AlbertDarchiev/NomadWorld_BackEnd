@@ -282,7 +282,7 @@ def get_location_by_id(loc_id:int, db: db_dependency):
     return responses
 
 @routerLoc.post("/create_location/{country_name}", response_model=LocationBase)
-async def create_location_location( country_name: str, db: db_dependency, image_files: List[str], location: LocationBase):
+async def create_location_location(country_name: str, db: db_dependency, image_files: List[str], location: LocationBase):
     
     loc_date = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     db_location = locationModel.Location(

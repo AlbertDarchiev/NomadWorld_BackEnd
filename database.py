@@ -14,6 +14,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+class UserModify(BaseModel):
+    newUsername: Optional[str] = None
+    newPassword: Optional[str] = None
+    newImg: Optional[str] = None
+
+
 class UserBase(BaseModel):
     id: Optional[int] = None
     username: Optional[str] = None

@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from pydantic import BaseModel
 from typing import List, Annotated, Optional
 from models import locationModel, userModel, imageModel, routeModel
-from database import SessionLocal, engine, UserBase
+from database import SessionLocal, engine, UserBase, UserModify
 from sqlalchemy.orm import Session
 from security import hasher as hash
 from fastapi.responses import JSONResponse, HTMLResponse
@@ -184,23 +184,23 @@ def reset_pass(user_mail: str, db:db_dependency):
         return JSONResponse(status_code=200, content="Password restored successfully")
 
 @router2.patch("/users/modify/{user_id}")
-async def update_user(user_id: int,db:db_dependency, username: Optional[str] = None, new_pass: Optional[str] = None, imageB64: Optional[str] = None):
+async def update_user(user_id: int,db:db_dependency, user:UserModify):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    if username is not None:
-        db_username_exist = db.query(userModel.Users).filter(userModel.Users.username == username).first()
+    if user.newUsername is not None:
+        db_username_exist = db.query(userModel.Users).filter(userModel.Users.username == user.newUsername).first()
         if db_username_exist:
             raise HTTPException(status_code=404, detail="Username already exists")
         else:
-            db_user.username = username
+            db_user.username = user.newUsername
             
-    if new_pass is not None:
-        db_user.password = hasher.get_password_hash(new_pass)
+    if user.newPassword is not None:
+        db_user.password = hasher.get_password_hash(user.newPassword)
 
-    if imageB64 is not None:
+    if user.newImg is not None:
         image_name = f"image_user_{user_id}.png"
-        await upload_file("profile_images", image_name, imageB64)
+        await upload_file("profile_images", image_name, user.newImg)
         db_user.img = f"https://ik.imagekit.io/albertITB/profile_images/{image_name}"
 
     db.commit()
