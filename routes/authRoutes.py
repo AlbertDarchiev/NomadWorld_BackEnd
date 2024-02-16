@@ -199,7 +199,7 @@ async def update_user(user_id: int,db:db_dependency, user:UserModify):
         db_user.password = hasher.get_password_hash(user.newPassword)
 
     if user.newImg is not None:
-        image_name = f"image_user_{user_id}.png"
+        image_name = f"image_user_{user_id}"
         await upload_file("profile_images", image_name, user.newImg)
         db_user.img = f"https://ik.imagekit.io/albertITB/profile_images/{image_name}"
 
@@ -215,10 +215,12 @@ async def upload_file(foldername: str, image_name:str, file: base64):
         url_endpoint='https://ik.imagekit.io/albertITB'
     )
 
-    imagekit.upload(
+    upload = imagekit.upload(
         file,
         file_name=image_name,
         options=UploadFileRequestOptions( 
             use_unique_file_name=False,
-            folder=foldername
+            folder=foldername,
+            overwrite_file = True
         ))
+    imagekit.purge_cache(upload.url)
