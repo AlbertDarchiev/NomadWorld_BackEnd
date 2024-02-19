@@ -206,8 +206,11 @@ async def update_user(user_id: int,db:db_dependency, user:UserModify):
     db.commit()
     db.refresh(db_user)
     db.close()
-    return JSONResponse(status_code=200, content="User updated successfully")
-
+    if user.newImg is not None:
+        return db_user.img
+    else :
+        return JSONResponse(status_code=200, content="User updated successfully")
+    
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
         private_key='private_iDHFe+AfM2FSVeBe1o11jqllHB4=',
