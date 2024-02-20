@@ -1,5 +1,5 @@
 
-# Nomad Wordl - BackEnd
+# Nomad World - BackEnd
 
 A brief description of what this project does and who it's for
 
@@ -15,7 +15,7 @@ A brief description of what this project does and who it's for
 
 ![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
 
-# Nomad Wordl - FAST API
+# Nomad World - FAST API
 A brief description of what this project does and who it's for
 
 
