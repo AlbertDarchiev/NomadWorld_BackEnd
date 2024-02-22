@@ -20,7 +20,10 @@ Nomad World es un proyecto diseñado para entusiastas de viajar que desean explo
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 
-# How to run
+## Database
+![Database Screenshot](https://ik.imagekit.io/albertITB/readme/db_nomad.png?updatedAt=1708616298207) 
+
+# Installation
 
 **Clonar el repositorio de GitHub:**
 
@@ -48,9 +51,6 @@ Nomad World es un proyecto diseñado para entusiastas de viajar que desean explo
 **Iniciar la aplicación utilizando Uvicorn**
 
     uvicorn main:app --host 0.0.0.0
-
-## Database
-![Database Screenshot](https://ik.imagekit.io/albertITB/readme/db_nomad.png?updatedAt=1708616298207) 
 
 ## Endpoints API
     
