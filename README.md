@@ -49,6 +49,8 @@ Nomad World es un proyecto diseñado para entusiastas de viajar que desean explo
 
     uvicorn main:app --host 0.0.0.0
 
+## Database
+![Database Screenshot](https://ik.imagekit.io/albertITB/readme/db_nomad.png?updatedAt=1708616298207) 
 
 ## Endpoints API
     
