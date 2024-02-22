@@ -215,6 +215,7 @@ Nomad World es un proyecto diseñado para entusiastas de viajar que desean explo
 ## EXTRA Features
 - añadir / borrar comentarios de Rutas / Localizaciones
 - añadir / borrar likes de Rutas / Localizaciones
+- chat entre usuarios
 
 ## Screenshots Uvicorn
 ![App Screenshot](https://ik.imagekit.io/albertITB/readme/2.png?updatedAt=1708598745336)
