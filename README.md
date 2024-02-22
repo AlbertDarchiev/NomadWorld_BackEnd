@@ -15,14 +15,16 @@ A brief description of what this project does and who it's for
 
 ![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
 
+# Nomad World - About
+Nomad World es un proyecto diseñado para entusiastas de viajar que desean explorar rutas de viaje compartidas por otros usuarios. La plataforma trabajará a modo de red social, esta permitirá a los usuario poder publicar el itinerario de sus viajes para así poder compartirlo con el resto de usuarios para inspirar a los usuario para sus próximos viajes.
+
 # Technologies
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 
 
-# Nomad World - FAST API
-Nomad World es un proyecto diseñado para entusiastas de viajar que desean explorar rutas de viaje compartidas por otros usuarios. La plataforma trabajará a modo de red social, esta permitirá a los usuario poder publicar el itinerario de sus viajes para así poder compartirlo con el resto de usuarios para inspirar a los usuario para sus próximos viajes.
+
 
 ## Endpoints API
 
