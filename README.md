@@ -1,8 +1,7 @@
 
 # Nomad World - BackEnd
 
-A brief description of what this project does and who it's for
-
+Nomad World es un proyecto diseñado para entusiastas de viajar que desean explorar rutas de viaje compartidas por otros usuarios. La plataforma trabajará a modo de red social, esta permitirá a los usuario poder publicar el itinerario de sus viajes para así poder compartirlo con el resto de usuarios para inspirar a los usuario para sus próximos viajes.
 
 ## Authors
 - [@AlbertDarchiev](https://github.com/AlbertDarchiev)
@@ -13,10 +12,8 @@ A brief description of what this project does and who it's for
 ## FrontEnd Project
 - [Nomad World - FrontEnd](https://github.com/LorenzoDalmaau/NomadWorld_Front-end_Flutter)
 
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+![App Screenshot](https://ik.imagekit.io/albertITB/readme/Nomad%20World.png?updatedAt=1708598106088) 
 
-# Nomad World - About
-Nomad World es un proyecto diseñado para entusiastas de viajar que desean explorar rutas de viaje compartidas por otros usuarios. La plataforma trabajará a modo de red social, esta permitirá a los usuario poder publicar el itinerario de sus viajes para así poder compartirlo con el resto de usuarios para inspirar a los usuario para sus próximos viajes.
 
 # Technologies
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
@@ -178,38 +175,37 @@ Nomad World es un proyecto diseñado para entusiastas de viajar que desean explo
 - **Descripción:** Elimina una ubicación guardada de un usuario.
 - **Respuesta:** Devuelve los detalles actualizados del usuario después de eliminar la ubicación.
 
-
-
-## Notas
-- Se utilizan excepciones HTTP para manejar los posibles errores y devolver códigos de estado adecuados.
-- Se implementan medidas de seguridad, como el almacenamiento seguro de contraseñas con hash.
-- Se envían correos electrónicos de confirmación y notificación para ciertas operaciones, como el registro de usuarios y el restablecimiento de contraseñas.
-
-## Features
+# Features
 - Crear Rutas / Localizaciones
 - Almazenar datos en BD de fl0
 - Subir imagenes al servidor de ImageKit
 - Restablecer contraseña con EmailSender
 - Hashear contraseñas de usuarios al guardar en BD
+- Excepciones HTTP para manejar los posibles errores y devolver códigos de estado
 
 ## EXTRA Features
 - añadir / borrar comentarios de Rutas / Localizaciones
 - añadir / borrar likes de Rutas / Localizaciones
-## Screenshots
 
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
-
-
-## Demo
-- [Test VIdeo](https://www.youtube.com/watch?v=OyfQn08FZz8)
+## Screenshots Uvicorn
+![App Screenshot](https://ik.imagekit.io/albertITB/readme/2.png?updatedAt=1708598745336)
+![App Screenshot](https://ik.imagekit.io/albertITB/readme/3.png?updatedAt=1708598745238)
 
 ## Evolution of Nomad World
 ### Sprint 1
+- [Test VIdeo]
 
 ### Sprint 2
 - [Test VIdeo](https://www.youtube.com/watch?v=OyfQn08FZz8)
 
 ### Sprint 3
+- [Test VIdeo]
+
+### Sprint 4
+- [Test VIdeo]
 
 ### Sprint 5
 - [Test VIdeo](https://www.youtube.com/watch?v=cOfXAh2gW2o)
+
+### Sprint 6
+- [Test VIdeo]
