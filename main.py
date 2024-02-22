@@ -8,10 +8,12 @@ from routes import authRoutes, mediaRoutes, imageRoutes
 import uvicorn
 
 app = FastAPI()
-app.include_router(authRoutes.router, tags=['Auth Routes'])
-app.include_router(authRoutes.router2, tags=['User Params'])
-app.include_router(mediaRoutes.routerLoc, tags=['Location Routes'])
-app.include_router(mediaRoutes.router, tags=['Media Routes'])
+app.include_router(authRoutes.router, tags=['Authentication'])
+app.include_router(authRoutes.routerUserP, tags=['User Params'])
+app.include_router(mediaRoutes.routerLoc, tags=['Location Endpoints'])
+app.include_router(mediaRoutes.router, tags=['Route Endpoints'])
+
+app.include_router(mediaRoutes.routerExtra, tags=['EXTRA Features'])
 
 #app.include_router(imageRoutes.router)
 

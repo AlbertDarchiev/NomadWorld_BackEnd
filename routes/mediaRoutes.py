@@ -1,11 +1,9 @@
 import copy
 from fastapi import FastAPI, HTTPException, Depends, APIRouter, File, Form, UploadFile
 from database import SessionLocal, engine, UserBase, RouteBase, LocationBase, ImageBase, LocationCommentBase, LocationLikeBase, RouteCommentBase
-import models 
 from typing import List, Annotated, Union
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, select
-from models import routeModel as routeM
 from models import userModel, locationModel, imageModel, coutryModel, routeLikesModel, locationLikesModel, routeModel, locationCommentModel,routeCommentModel
 from datetime import datetime
 import base64
@@ -14,8 +12,10 @@ from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+# ROUTERS
 router = APIRouter()
 routerLoc = APIRouter()
+routerExtra = APIRouter()
 
 def get_db():
     try:
@@ -25,6 +25,8 @@ def get_db():
         db.close() 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+# COUNTRIES endpoints
+################################################################################################################################
 @router.get("/country/")
 def get_country_route(db: db_dependency):
     country_info = db.query(coutryModel.Country).all()
@@ -32,87 +34,8 @@ def get_country_route(db: db_dependency):
         raise HTTPException(status_code=404, detail="Country not found")
     return country_info
 
-# SAVE LOCATION --------------------------------------------------------------------
-@routerLoc.patch("/save/location/")
-def save_location(db: db_dependency, user_id : int, location_id: int):
-    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User id not found")
-    elif not location:
-        raise HTTPException(status_code=404, detail="Location id not found")
-    elif location_id in user.saved_locations:
-        raise HTTPException(status_code=404, detail="Location already saved")
-    else:
-        new_data = copy.copy(user.saved_locations)
-        new_data.append(location_id)
-        user.saved_locations = new_data
-        db.commit()
-        db.refresh(user)
-        return user
-    
-# SAVE ROUTE --------------------------------------------------------------------
-@router.patch("/save/route/")
-def save_location(db: db_dependency, user_id : int, route_id: int):
-    route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
-    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-    
-    if not route:
-        raise HTTPException(status_code=404, detail="Route id not found")
-    elif not user:
-        raise HTTPException(status_code=404, detail="User id not found")
-    elif route_id in user.saved_routes:
-        raise HTTPException(status_code=404, detail="Route already saved")
-    else :
-        new_data = copy.copy(user.saved_routes)
-        new_data.append(route_id)
-        user.saved_routes = new_data
-        db.commit()
-        db.refresh(user)
-        return user
-    
-# UNSAVE LOCATION --------------------------------------------------------------------
-@routerLoc.patch("/unsave/location/")
-def save_location(db: db_dependency, user_id : int, location_id: int):
-    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
-    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-
-    if not location:
-        raise HTTPException(status_code=404, detail="Location id not found")
-    elif not user:
-        raise HTTPException(status_code=404, detail="User id not found")
-    elif location_id not in user.saved_locations:
-        raise HTTPException(status_code=404, detail="Location already unsaved")
-    else :
-        new_data = copy.copy(user.saved_locations)
-        new_data.remove(location_id)
-        user.saved_locations = new_data
-        db.commit()
-        db.refresh(user)
-        return user
-
-# UNSAVE ROUTE --------------------------------------------------------------------
-@router.patch("/unsave/route/")
-def unsave_route(db: db_dependency, user_id : int, route_id: int):
-    route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
-    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
-
-    if not route:
-        raise HTTPException(status_code=404, detail="Route id not found")
-    elif not user:
-        raise HTTPException(status_code=404, detail="User id not found")
-    elif route_id not in user.saved_routes:
-        raise HTTPException(status_code=404, detail="Route already unsaved")
-    else :
-        new_data = copy.copy(user.saved_routes)
-        new_data.remove(route_id)
-        user.saved_routes = new_data
-        db.commit()
-        db.refresh(user)
-        return user
-
-# ROUTE ROUTES ---------------------------------------------------------------------
+# ROUTE endpoints
+################################################################################################################################
 @router.get("/route/more_likes/")
 def get_media_more_likes_route(db: db_dependency):
     # Consulta LEFT JOIN para incluir rutas sin likes
@@ -141,7 +64,6 @@ def get_media_more_likes_route(db: db_dependency):
 
     return responses
 
-
 @router.get("/route/")    
 def get_media_route(db: db_dependency):
     route_info = db.query(routeModel.Route).all()
@@ -166,14 +88,13 @@ def get_media_route(db: db_dependency):
     
     return responses
 
-
 @router.get("/route/{country_name}")
 def get_route_by_country_route(country_name: str, db: db_dependency):
     country = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first()
     if country is None:
         raise HTTPException(status_code=404, detail="Country not foundd")
     
-    route_info = db.query(routeM.Route).filter(routeModel.Route.country_id == country.id).all()
+    route_info = db.query(routeModel.Route).filter(routeModel.Route.country_id == country.id).all()
     responses = []
     if not route_info:
         raise HTTPException(status_code=404, detail="Route not found")
@@ -198,7 +119,7 @@ def get_route_by_country_route(country_name: str, db: db_dependency):
 @router.post("/create_route/{country_name}", response_model=RouteBase)
 def create_route_route(country_name: str, route: RouteBase, db: db_dependency):
     country_name = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id
-    db_route = routeM.Route(
+    db_route = routeModel.Route(
         name=route.name,
         description=route.description,
         distance=route.distance,
@@ -211,24 +132,46 @@ def create_route_route(country_name: str, route: RouteBase, db: db_dependency):
     db.refresh(db_route)
     return db_route
 
-@router.post("/save_route", response_model=RouteBase)
-def save_route(db:db_dependency, country_name:str, route: RouteBase = Depends()):
-    db_route = routeModel.Route(
-        name = route.name,
-        descirption = route.description,
-        distance = route.distance,
-        duration = route.duration,
-        country_id = db.query(coutryModel.Country).filter(coutryModel.Country.name == country_name).first().id,
-        location_id = route.location_id
-    )
-    db.add(db_route)
-    db.commit()
-    db.refresh(db_route)
-    return db_route
+@router.patch("/save/route/")
+def save_location(db: db_dependency, user_id : int, route_id: int):
+    route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+    
+    if not route:
+        raise HTTPException(status_code=404, detail="Route id not found")
+    elif not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif route_id in user.saved_routes:
+        raise HTTPException(status_code=404, detail="Route already saved")
+    else :
+        new_data = copy.copy(user.saved_routes)
+        new_data.append(route_id)
+        user.saved_routes = new_data
+        db.commit()
+        db.refresh(user)
+        return user
 
+@router.patch("/unsave/route/")
+def unsave_route(db: db_dependency, user_id : int, route_id: int):
+    route = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
 
-# LOCATION ROUTES ---------------------------------------------------------------------
-
+    if not route:
+        raise HTTPException(status_code=404, detail="Route id not found")
+    elif not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif route_id not in user.saved_routes:
+        raise HTTPException(status_code=404, detail="Route already unsaved")
+    else :
+        new_data = copy.copy(user.saved_routes)
+        new_data.remove(route_id)
+        user.saved_routes = new_data
+        db.commit()
+        db.refresh(user)
+        return user
+    
+# LOCATION endpoints
+################################################################################################################################
 @routerLoc.get("/location")
 def get_location(db: db_dependency): 
     location_info = db.query(locationModel.Location).all()
@@ -324,8 +267,57 @@ async def create_location_location(country_name: str, db: db_dependency, image_f
     db.refresh(db_location)
     return JSONResponse( status_code=201, content="Location created successfully")
 
-#Comment location
-@routerLoc.post("/add_comment/location", response_model=LocationCommentBase)
+@routerLoc.patch("/save/location/")
+def save_location(db: db_dependency, user_id : int, location_id: int):
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif not location:
+        raise HTTPException(status_code=404, detail="Location id not found")
+    elif location_id in user.saved_locations:
+        raise HTTPException(status_code=404, detail="Location already saved")
+    else:
+        new_data = copy.copy(user.saved_locations)
+        new_data.append(location_id)
+        user.saved_locations = new_data
+        db.commit()
+        db.refresh(user)
+        return user
+    
+@routerLoc.patch("/unsave/location/")
+def save_location(db: db_dependency, user_id : int, location_id: int):
+    location = db.query(locationModel.Location).filter(locationModel.Location.id == location_id).first()
+    user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
+
+    if not location:
+        raise HTTPException(status_code=404, detail="Location id not found")
+    elif not user:
+        raise HTTPException(status_code=404, detail="User id not found")
+    elif location_id not in user.saved_locations:
+        raise HTTPException(status_code=404, detail="Location already unsaved")
+    else :
+        new_data = copy.copy(user.saved_locations)
+        new_data.remove(location_id)
+        user.saved_locations = new_data
+        db.commit()
+        db.refresh(user)
+        return user
+
+
+################################################################################################################################
+################################################################################################################################
+
+# EXTRA FEATURES
+
+################################################################################################################################
+################################################################################################################################
+
+
+#Location Comments
+################################################################################################################################
+@routerExtra.post("/add_comment/location", response_model=LocationCommentBase)
 def create_location_location( db: db_dependency, comment: LocationCommentBase):
     date_now = datetime.now()
     loc_id_exists = db.query(locationModel.Location).filter(locationModel.Location.id == comment.location_id).first()
@@ -344,7 +336,7 @@ def create_location_location( db: db_dependency, comment: LocationCommentBase):
     db.close()
     return JSONResponse( status_code=201, content="Comment posted successfully")
 
-@routerLoc.get("/comment/location/{loc_id}")
+@routerExtra.get("/comment/location/{loc_id}")
 def get_comment_location(loc_id:int, db: db_dependency):
     location_info = db.query(locationModel.Location).filter(locationModel.Location.id == loc_id).first()
     if not location_info:
@@ -355,8 +347,20 @@ def get_comment_location(loc_id:int, db: db_dependency):
             raise HTTPException(status_code=404, detail="Comments not found")
         else:
             return comments
-#COMMENT ROUTE´
-@router.post("/add_comment/route", response_model=RouteCommentBase)
+
+@routerExtra.delete("/delete_location_comment/{comment_id}")
+def delete_comment(comment_id: int, db: db_dependency):
+    comment = db.query(locationCommentModel.Location_comment).filter(locationCommentModel.Location_comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    else:
+        db.delete(comment)
+        db.commit()
+        return JSONResponse( status_code=201, content="Comment deleted successfully")
+
+#Route Comments
+################################################################################################################################
+@routerExtra.post("/add_comment/route", response_model=RouteCommentBase)
 def create_route_comment(db: db_dependency, comment: RouteCommentBase):
     date_now = datetime.now()
     route_id_exists = db.query(routeModel.Route).filter(routeModel.Route.id == comment.route_id).first()
@@ -375,7 +379,7 @@ def create_route_comment(db: db_dependency, comment: RouteCommentBase):
     db.close()
     return JSONResponse( status_code=201, content="Comment posted successfully")
 
-@router.get("/comment/route/{route_id}")
+@routerExtra.get("/comment/route/{route_id}")
 def get_comment_route(route_id:int, db: db_dependency):
     route_info = db.query(routeModel.Route).filter(routeModel.Route.id == route_id).first()
     if not route_info:
@@ -387,17 +391,7 @@ def get_comment_route(route_id:int, db: db_dependency):
         else:
             return comments
 
-@routerLoc.delete("/delete_location_comment/{comment_id}")
-def delete_comment(comment_id: int, db: db_dependency):
-    comment = db.query(locationCommentModel.Location_comment).filter(locationCommentModel.Location_comment.id == comment_id).first()
-    if not comment:
-        raise HTTPException(status_code=404, detail="Comment not found")
-    else:
-        db.delete(comment)
-        db.commit()
-        return JSONResponse( status_code=201, content="Comment deleted successfully")
-
-@router.delete("/delete_route_comment/{comment_id}")
+@routerExtra.delete("/delete_route_comment/{comment_id}")
 def delete_comment(comment_id: int, db: db_dependency):
     comment = db.query(routeCommentModel.Route_comment).filter(routeCommentModel.Route_comment.id == comment_id).first()
     if not comment:
@@ -407,8 +401,9 @@ def delete_comment(comment_id: int, db: db_dependency):
         db.commit()
         return JSONResponse( status_code=201, content="Comment deleted successfully")
     
-#LIKES LOCATION       
-@routerLoc.post("/like/location/")
+#Location Likes  
+################################################################################################################################
+@routerExtra.post("/like/location/")
 def like_location(user_id: int, loc_id:int, db: db_dependency):
     if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
         raise HTTPException(status_code=400, detail="User ID not found")
@@ -427,7 +422,7 @@ def like_location(user_id: int, loc_id:int, db: db_dependency):
     db.close()
     return JSONResponse( status_code=201, content="Location liked successfully")
 
-@routerLoc.delete("/unlike/location/")
+@routerExtra.delete("/unlike/location/")
 def unlike_location(user_id: int, loc_id:int, db: db_dependency):
     if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
         raise HTTPException(status_code=400, detail="User ID not found")
@@ -441,7 +436,7 @@ def unlike_location(user_id: int, loc_id:int, db: db_dependency):
     db.close()
     return JSONResponse( status_code=201, content="Location unliked successfully")
 
-@routerLoc.get("/likes/location/{loc_id}")
+@routerExtra.get("/likes/location/{loc_id}")
 def get_loc_likes(loc_id:int,  db: db_dependency):
     loc_Model = locationLikesModel.LocationLikes
     liked_loc = db.query(loc_Model).filter(loc_Model.location_id == loc_id).all()
@@ -450,8 +445,9 @@ def get_loc_likes(loc_id:int,  db: db_dependency):
     else:
         return liked_loc
 
-#LIKES ROUTE       
-@router.post("/like/route/")
+#Route Likes
+################################################################################################################################       
+@routerExtra.post("/like/route/")
 def like_route(user_id: int, route_id:int, db: db_dependency):
     if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
         raise HTTPException(status_code=400, detail="User ID not found")
@@ -470,7 +466,7 @@ def like_route(user_id: int, route_id:int, db: db_dependency):
     db.close()
     return JSONResponse( status_code=201, content="Route liked successfully")
 
-@router.delete("/unlike/route/")
+@routerExtra.delete("/unlike/route/")
 def unlike_route(user_id: int, route_id:int, db: db_dependency):
     if not db.query(userModel.Users).filter(userModel.Users.id == user_id).first():
         raise HTTPException(status_code=400, detail="User ID not found")
@@ -484,7 +480,7 @@ def unlike_route(user_id: int, route_id:int, db: db_dependency):
     db.close()
     return JSONResponse( status_code=201, content="Route unliked successfully")
 
-@router.get("/likes/route/{route_id}")
+@routerExtra.get("/likes/route/{route_id}")
 def get_lroute_likes(route_id:int,  db: db_dependency):
     route_Model = routeLikesModel.RouteLikes
     liked_route = db.query(route_Model).filter(route_Model.location_id == route_id).all()
@@ -493,6 +489,12 @@ def get_lroute_likes(route_id:int,  db: db_dependency):
     else:
         return liked_route
 
+
+
+
+
+# IMAGEKIT FEATURES
+################################################################################################################################ 
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
         private_key='private_iDHFe+AfM2FSVeBe1o11jqllHB4=',
@@ -500,11 +502,10 @@ async def upload_file(foldername: str, image_name:str, file: base64):
         url_endpoint='https://ik.imagekit.io/albertITB'
     )
     #content = await file
-    #image_base64 = base64.b64encode(content).decode("utf-8")
     imagekit.upload(
-        file, #se especifica el archivo a subir
-        file_name=image_name, #se especifica el nombre del archivo
-        options=UploadFileRequestOptions( #se especifican las opciones de subida(con las que hay ahora tenemos suficiente)
+        file, #archivo a subir
+        file_name=image_name, #nombre archivo
+        options=UploadFileRequestOptions( #opciones de subida
             use_unique_file_name=False,
             folder=foldername
         ))

@@ -17,7 +17,10 @@ from password_generator import PasswordGenerator
 hasher = hash.Hasher()
 def_profile_img = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
 
+# ROUTERS
 router = APIRouter()
+routerUserP = APIRouter()
+
 def get_db():
     try:
         db = SessionLocal()
@@ -27,6 +30,8 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+# USERS endpoints
+################################################################################################################################
 @router.get("/users", response_model=List[UserBase])
 def get_users(db: db_dependency):
     users = db.query(userModel.Users).all()
@@ -70,7 +75,8 @@ def get_user(user_id: int, db: db_dependency):
     user.saved_locations = locations
     return user
 
-
+# LOG-REG endpoints
+################################################################################################################################
 @router.post("/register", response_model=UserBase)
 def create_user(user:UserBase,db:db_dependency):
     if user.username == "":
@@ -108,7 +114,6 @@ def create_user(user:UserBase,db:db_dependency):
     email.ESender.send_email(receiver, subject, body)
 
     return JSONResponse( status_code=201, content="User created successfully")
-
 
 @router.post("/login")
 async def login(user:UserBase, db:db_dependency):
@@ -156,12 +161,11 @@ async def login(user:UserBase, db:db_dependency):
     db_user.saved_locations = locations
     return db_user
 
+# USER CONFIG endpoints
+################################################################################################################################
 
 
-# USER PARAMS
-router2 = APIRouter()
-
-@router2.patch("/users/restore_pass/{user_mail}")
+@routerUserP.patch("/users/restore_pass/{user_mail}")
 def reset_pass(user_mail: str, db:db_dependency):
     db_user = db.query(userModel.Users).filter(userModel.Users.email == user_mail).first()
     if not db_user:
@@ -183,7 +187,7 @@ def reset_pass(user_mail: str, db:db_dependency):
         db.close()
         return JSONResponse(status_code=200, content="Password restored successfully")
 
-@router2.patch("/users/modify/{user_id}")
+@routerUserP.patch("/users/modify/{user_id}")
 async def update_user(user_id: int,db:db_dependency, user:UserModify):
     db_user = db.query(userModel.Users).filter(userModel.Users.id == user_id).first()
     if not db_user:
@@ -211,6 +215,10 @@ async def update_user(user_id: int,db:db_dependency, user:UserModify):
     else :
         return JSONResponse(status_code=200, content="User updated successfully")
     
+
+
+# IMAGEKIT FEATURES
+################################################################################################################################ 
 async def upload_file(foldername: str, image_name:str, file: base64):
     imagekit = ImageKit(
         private_key='private_iDHFe+AfM2FSVeBe1o11jqllHB4=',
