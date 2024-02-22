@@ -20,11 +20,38 @@ Nomad World es un proyecto diseñado para entusiastas de viajar que desean explo
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 
+# How to run
 
+**Clonar el repositorio de GitHub:**
+
+    git pull https://github.com/AlbertDarchiev/NomadWorld_BackEnd.git 
+    
+**Instalar el entorno virtual de Python y pip:**
+
+    sudo apt install -y python3.10-venv python3-pip
+    
+**Crear un entorno virtual:**
+
+    python -m venv env
+
+**Activar el entorno virtual (linux):**
+
+  Windows: ` .\env\Scripts\activate`
+
+  Linux: ` source env/bin/activate `
+
+
+**Instalar las dependencias del proyecto listadas en el archivo `requirements.txt`:**
+
+    sudo pip install -r requirements.txt
+
+**Iniciar la aplicación utilizando Uvicorn**
+
+    uvicorn main:app --host 0.0.0.0
 
 
 ## Endpoints API
-
+    
 ### Usuarios
 
 #### Obtener todos los usuarios
